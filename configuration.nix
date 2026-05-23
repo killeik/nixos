@@ -14,6 +14,28 @@
 	boot.loader.systemd-boot.enable = true;
 	boot.loader.efi.canTouchEfiVariables = true;
 
+systemd.services.gitnix = {
+    description = "Git nix - does nix via git";
+    serviceConfig.Type = "oneshot";
+    path = with pkgs; [
+    	git
+    	nixos-rebuild
+    ];
+    script = ''
+			git -C /home/killeik/nixos pull
+			nixos-rebuild switch /home/killeik/nixos
+    '';
+  };
+
+  systemd.timers.gitnix = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "hourly";
+      Persistent = true;
+      Unit = "gitnix.service";
+    };
+  };
+
 # networking.hostName = "nixos"; # Define your hostname.
 
 # Configure network connections interactively with nmcli or nmtui.
