@@ -24,7 +24,7 @@ systemd.services.gitnix = {
     script = ''
     	repo="/home/killeik/nixos"
 			git -C "$repo" pull
-			NIXOS_CONFIG="$repo/configuration.nix" nixos-rebuild switch /home/killeik/nixos
+			NIXOS_CONFIG="$repo/configuration.nix" nixos-rebuild switch
     '';
   };
 
