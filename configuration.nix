@@ -31,6 +31,10 @@ systemd.services.gitnix = {
     '';
   };
 
+  services.logind.settings.Login = {
+    HandleLidSwitch = "ignore"; # Disable sleep on lid closed.
+  };
+
   systemd.timers.gitnix = {
     wantedBy = [ "timers.target" ];
     timerConfig = {
