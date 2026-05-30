@@ -24,7 +24,7 @@ systemd.services.gitnix = {
     script = ''
       cd "/home/killeik/nixos"
 			git pull
-			nixos-rebuild switch --flake .#oggy
+			nixos-rebuild switch --flake .
     '';
   };
 
@@ -130,7 +130,7 @@ systemd.services.gitnix = {
 		experimental-features = [
 			"flakes"
 			"nix-command"
-			"pipes"
+			"pipe-operators"
 		];
 	};
 }
