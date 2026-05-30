@@ -21,13 +21,10 @@ systemd.services.gitnix = {
     	git
     	nixos-rebuild
     ];
-    environment = {
-        NIX_PATH = "nixpkgs=/nix/var/nix/profiles/per-user/root/channels/nixos:nixos-config=/etc/nixos/configuration.nix:/nix/var/nix/profiles/per-user/root/channels";
-      };
     script = ''
-    	repo="/home/killeik/nixos"
-			git -C "$repo" pull
-			NIXOS_CONFIG="$repo/configuration.nix" nixos-rebuild switch
+      cd "/home/killeik/nixos"
+			git pull
+			nixos-rebuild switch --flake .#oggy
     '';
   };
 
@@ -44,7 +41,7 @@ systemd.services.gitnix = {
     };
   };
 
-# networking.hostName = "nixos"; # Define your hostname.
+ networking.hostName = "oggy"; # Define your hostname.
 
 # Configure network connections interactively with nmcli or nmtui.
 	networking.networkmanager.enable = true;
@@ -129,5 +126,12 @@ systemd.services.gitnix = {
 # For more information, see `man configuration.nix` or https://nixos.org/manual/nixos/stable/options#opt-system.stateVersion .
 	system.stateVersion = "25.11"; # Did you read the comment?
 
+	nix.settings= {
+		experimental-features = [
+			"flakes"
+			"nix-command"
+			"pipes"
+		];
+	};
 }
 
