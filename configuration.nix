@@ -128,6 +128,11 @@ systemd.services.gitnix = {
 	system.stateVersion = "25.11"; # Did you read the comment?
 
 	nix.settings= {
+		trusted-users = [
+			"root"
+			"killeik"
+		];
+
 		experimental-features = [
 			"flakes"
 			"nix-command"
