@@ -1,5 +1,9 @@
 selfhost/*
+!selfhost/.env.example
 !selfhost/compose.yaml
 !selfhost/caddy/
 selfhost/caddy/*
 !selfhost/caddy/Caddyfile
+!selfhost/terminus/
+selfhost/terminus/*
+!selfhost/terminus/.env.example

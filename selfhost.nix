@@ -3,6 +3,7 @@
 let
   selfhostDir = "/home/killeik/selfhost";
   secretsFile = "${selfhostDir}/.env";
+  terminusEnvFile = "${selfhostDir}/terminus/.env";
 
   commonContainerOptions = {
     pull = "always";
@@ -20,6 +21,10 @@ in
     install -d -m 0755 -o killeik -g users ${selfhostDir}
     install -d -m 0755 -o killeik -g users ${selfhostDir}/caddy
     install -d -m 0755 -o killeik -g users ${selfhostDir}/caddy/lan_ca
+    install -d -m 0755 -o killeik -g users ${selfhostDir}/terminus
+    install -d -m 0755 -o killeik -g users ${selfhostDir}/terminus/database
+    install -d -m 0755 -o killeik -g users ${selfhostDir}/terminus/keyvalue
+    install -d -m 0755 -o killeik -g users ${selfhostDir}/terminus/uploads
     install -m 0644 -o killeik -g users ${./selfhost/caddy/Caddyfile} ${selfhostDir}/caddy/Caddyfile
   '';
 
@@ -130,6 +135,76 @@ in
           "${selfhostDir}/forgejo:/data"
           "/etc/timezone:/etc/timezone:ro"
           "/etc/localtime:/etc/localtime:ro"
+        ];
+      };
+
+      terminus-web = commonContainerOptions // {
+        image = "ghcr.io/usetrmnl/terminus:latest";
+        dependsOn = [
+          "terminus-db"
+          "terminus-keyvalue"
+        ];
+        environment = {
+          HANAMI_PORT = "2300";
+          API_URI = "https://terminus.lan";
+          APP_SETUP = "true";
+        };
+        environmentFiles = [
+          terminusEnvFile
+        ];
+        volumes = [
+          "${selfhostDir}/terminus/uploads:/app/public/uploads"
+        ];
+      };
+
+      terminus-worker = commonContainerOptions // {
+        image = "ghcr.io/usetrmnl/terminus:latest";
+        dependsOn = [ "terminus-web" ];
+        cmd = [
+          "bundle"
+          "exec"
+          "sidekiq"
+          "-r"
+          "./config/sidekiq.rb"
+        ];
+        environment = {
+          HANAMI_PORT = "2300";
+          API_URI = "https://terminus.lan";
+        };
+        environmentFiles = [
+          terminusEnvFile
+        ];
+        volumes = [
+          "${selfhostDir}/terminus/uploads:/app/public/uploads"
+        ];
+      };
+
+      terminus-db = commonContainerOptions // {
+        image = "docker.io/postgres:18.4-alpine";
+        environment = {
+          POSTGRES_USER = "terminus";
+          POSTGRES_DB = "terminus";
+        };
+        environmentFiles = [
+          terminusEnvFile
+        ];
+        volumes = [
+          "${selfhostDir}/terminus/database:/var/lib/postgresql"
+        ];
+      };
+
+      terminus-keyvalue = commonContainerOptions // {
+        image = "docker.io/valkey/valkey:9-alpine";
+        entrypoint = "/bin/sh";
+        cmd = [
+          "-c"
+          "exec valkey-server --requirepass \"$KEYVALUE_PASSWORD\" --maxmemory 512mb --maxmemory-policy noeviction --port 6379"
+        ];
+        environmentFiles = [
+          terminusEnvFile
+        ];
+        volumes = [
+          "${selfhostDir}/terminus/keyvalue:/data"
         ];
       };
     };
