@@ -10,7 +10,9 @@ in
 
   system.activationScripts.selfhost-compose = ''
     install -d -m 0755 -o killeik -g users ${selfhostDir}
+    install -d -m 0755 -o killeik -g users ${selfhostDir}/caddy
     install -m 0644 -o killeik -g users ${./selfhost/compose.yaml} ${selfhostDir}/compose.yaml
+    install -m 0644 -o killeik -g users ${./selfhost/caddy/Caddyfile} ${selfhostDir}/caddy/Caddyfile
   '';
 
   systemd.services.selfhost-compose = {
@@ -20,6 +22,7 @@ in
     wants = [ "docker.service" "network-online.target" ];
     restartTriggers = [
       ./selfhost/compose.yaml
+      ./selfhost/caddy/Caddyfile
     ];
 
     serviceConfig = {

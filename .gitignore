@@ -1,2 +1,5 @@
 selfhost/*
 !selfhost/compose.yaml
+!selfhost/caddy/
+selfhost/caddy/*
+!selfhost/caddy/Caddyfile

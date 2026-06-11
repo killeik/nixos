@@ -1,0 +1,64 @@
+{
+  pki {
+		ca lan_ca {
+			name lan_ca
+			root {
+				cert /etc/caddy/lan_ca/ca.crt
+				key /etc/caddy/lan_ca/ca.key
+			}
+		}
+	}
+}
+
+(tls_lan_ca) {
+	tls {
+		issuer internal {
+			ca lan_ca
+		}
+	}
+}
+
+silverbullet.lan {
+	reverse_proxy silverbullet:3000
+	import tls_lan_ca
+}
+miniflux.lan {
+	reverse_proxy miniflux:8080
+	import tls_lan_ca
+}
+rssbridge.lan {
+	reverse_proxy rssbridge:80
+	import tls_lan_ca
+}
+obsidian.lan {
+	reverse_proxy obsidian-couchdb:5984
+	import tls_lan_ca
+}
+immich.lan {
+	reverse_proxy immich_server:2283
+	import tls_lan_ca
+}
+libretranslate.lan {
+	reverse_proxy libretranslate:5000
+	import tls_lan_ca
+}
+syncthing.lan {
+	reverse_proxy syncthing:8384
+	import tls_lan_ca
+}
+wg-easy.lan {
+	reverse_proxy wg-easy:51821
+	import tls_lan_ca
+}
+http://forgejo.lan, https://forgejo.lan {
+	reverse_proxy forgejo:3000
+	import tls_lan_ca
+}
+http://tss.lan {
+	reverse_proxy tss:8080
+	import tls_lan_ca
+}
+example.lan {
+	import tls_lan_ca
+	respond "https on a local domain"
+}
