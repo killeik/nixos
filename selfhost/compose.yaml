@@ -1,0 +1,140 @@
+name: selfhost
+
+services:
+  caddy:
+    image: docker.io/caddy:2
+    container_name: caddy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+      - ./caddy/lan_ca:/etc/caddy/lan_ca
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+
+  tss:
+    image: ghcr.io/gothenburgbitfactory/taskchampion-sync-server:latest
+    restart: unless-stopped
+    environment:
+      - "RUST_LOG=info"
+      - "DATA_DIR=/var/lib/taskchampion-sync-server/data"
+      - "LISTEN=0.0.0.0:8080"
+      # make taskchampion work only with specific client id
+      # - "CLIENT_ID=${TASKCHAMPION_SYNC_SERVER_CLIENT_ID}"
+    volumes:
+      - ./task-sync-server/data:/var/lib/taskchampion-sync-server/data
+
+  syncthing:
+    image: docker.io/syncthing/syncthing:latest
+    container_name: syncthing
+    hostname: my-syncthing
+    volumes:
+      - ./syncthing:/var/syncthing
+    environment:
+      - PUID=1001
+      - PGID=1001
+    ports:
+      # - 8384:8384 # Web UI
+      - 22000:22000/tcp # TCP file transfers
+      - 22000:22000/udp # QUIC file transfers
+      - 21027:21027/udp # Receive local discovery broadcasts
+    restart: unless-stopped
+
+  wg-easy:
+    image: ghcr.io/wg-easy/wg-easy:15
+    container_name: wg-easy
+    environment:
+      - INSECURE=true
+      - DISABLE_IPV6=true
+    ports:
+      - "51820:51820/udp"
+    volumes:
+      - ./wg-easy:/etc/wireguard
+      - /lib/modules:/lib/modules:ro
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    sysctls:
+      - net.ipv4.ip_forward=1
+      - net.ipv4.conf.all.src_valid_mark=1
+    restart: unless-stopped
+
+  miniflux:
+    image: docker.io/miniflux/miniflux:latest
+    container_name: miniflux
+    depends_on:
+      miniflux-db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgres://miniflux:${POSTGRES_PASSWORD}@miniflux-db/miniflux?sslmode=disable
+      - RUN_MIGRATIONS=1
+        #- CREATE_ADMIN=1
+        #- ADMIN_USERNAME=killeik
+        #- ADMIN_PASSWORD=
+      - FETCH_YOUTUBE_WATCH_TIME=1
+        #- YOUTUBE_EMBED_URL_OVERRIDE=https://www.youtube.com/embed/
+      - YOUTUBE_API_KEY=${YOUTUBE_API_KEY}
+      - BASE_URL=https://miniflux.lan/
+      - HTTP_CLIENT_MAX_BODY_SIZE=50
+    healthcheck:
+      test: ["CMD", "/usr/bin/miniflux", "-healthcheck", "auto"]
+    restart: unless-stopped
+
+  miniflux-db:
+    image: docker.io/postgres:15
+    container_name: postgres
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_USER=miniflux
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - ./miniflux-db/:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "miniflux"]
+      interval: 10s
+      start_period: 30s
+    restart: unless-stopped
+
+  rssbridge:
+    container_name: rssbridge
+    image: docker.io/rssbridge/rss-bridge:latest
+    # volumes:
+    #   - ./rssbridge/config:/config
+    restart: unless-stopped
+
+  silverbullet:
+    container_name: silverbullet
+    image: ghcr.io/silverbulletmd/silverbullet:latest
+    restart: unless-stopped
+    environment:
+      - SB_USER=killeik:${SILVERBULLET_PASSWORD}
+    volumes:
+      - ./silverbullet/space:/space
+
+  forgejo:
+    image: codeberg.org/forgejo/forgejo:13
+    container_name: forgejo
+    environment:
+      - USER_UID=1001
+      - USER_GID=1001
+    restart: unless-stopped
+    volumes:
+      - ./forgejo:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      # - "3000:3000"
+      - "222:22"
+
+networks:
+  default:
+
+volumes:
+  caddy_data:
+  caddy_config:

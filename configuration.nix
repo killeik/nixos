@@ -8,6 +8,7 @@
 	imports =
 		[ # Include the results of the hardware scan.
 		./hardware-configuration.nix
+		./selfhost.nix
 		];
 
 # Use the systemd-boot EFI boot loader.
@@ -134,4 +135,3 @@ systemd.services.gitnix = {
 		];
 	};
 }
-

@@ -1,0 +1,2 @@
+selfhost/*
+!selfhost/compose.yaml
