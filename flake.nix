@@ -5,10 +5,8 @@
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
   };
 
-  outputs = { self, nixpkgs }: let
-    inherit (nixpkgs) lib;
-  in {
-    nixosConfigurations.oggy = lib.nixosSystem {
+  outputs = { self, nixpkgs }: {
+    nixosConfigurations.oggy = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         modules = [ ./configuration.nix ];
       };
