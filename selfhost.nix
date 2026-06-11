@@ -63,8 +63,8 @@ in
         image = "docker.io/syncthing/syncthing:latest";
         hostname = "my-syncthing";
         environment = {
-          PUID = "1001";
-          PGID = "1001";
+          PUID = "1000";
+          PGID = "100";
         };
         ports = [
           "22000:22000/tcp"
