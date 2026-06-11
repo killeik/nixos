@@ -6,6 +6,9 @@ let
 
   commonContainerOptions = {
     pull = "always";
+    extraOptions = [
+      "--network=selfhost"
+    ];
   };
 in
 {
@@ -21,6 +24,21 @@ in
   '';
 
   systemd.services.docker-caddy.restartTriggers = [ ./selfhost/caddy/Caddyfile ];
+  systemd.services.docker-network-selfhost = {
+    wantedBy = [ "multi-user.target" ];
+    requiredBy = [ "docker-caddy.service" ];
+    before = [ "docker-caddy.service" ];
+    after = [ "docker.service" ];
+    requires = [ "docker.service" ];
+    path = [ pkgs.docker ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    script = ''
+      docker network inspect selfhost >/dev/null 2>&1 || docker network create selfhost
+    '';
+  };
 
   virtualisation.oci-containers = {
     backend = "docker";
@@ -32,9 +50,6 @@ in
           "80:80"
           "443:443"
           "443:443/udp"
-        ];
-        extraOptions = [
-          "--add-host=host.docker.internal:host-gateway"
         ];
         volumes = [
           "${selfhostDir}/caddy/Caddyfile:/etc/caddy/Caddyfile:ro"
@@ -52,7 +67,6 @@ in
           PGID = "1001";
         };
         ports = [
-          "127.0.0.1:8384:8384"
           "22000:22000/tcp"
           "22000:22000/udp"
           "21027:21027/udp"
@@ -71,12 +85,6 @@ in
           BASE_URL = "https://miniflux.lan/";
           HTTP_CLIENT_MAX_BODY_SIZE = "50";
         };
-        ports = [
-          "127.0.0.1:8080:8080"
-        ];
-        extraOptions = [
-          "--add-host=host.docker.internal:host-gateway"
-        ];
         environmentFiles = [
           secretsFile
         ];
@@ -90,9 +98,6 @@ in
         environmentFiles = [
           secretsFile
         ];
-        ports = [
-          "127.0.0.1:5432:5432"
-        ];
         volumes = [
           "${selfhostDir}/miniflux-db:/var/lib/postgresql/data"
         ];
@@ -100,16 +105,10 @@ in
 
       rssbridge = commonContainerOptions // {
         image = "docker.io/rssbridge/rss-bridge:latest";
-        ports = [
-          "127.0.0.1:8081:80"
-        ];
       };
 
       silverbullet = commonContainerOptions // {
         image = "ghcr.io/silverbulletmd/silverbullet:latest";
-        ports = [
-          "127.0.0.1:3001:3000"
-        ];
         environmentFiles = [
           secretsFile
         ];
@@ -125,7 +124,6 @@ in
           USER_GID = "1001";
         };
         ports = [
-          "127.0.0.1:3000:3000"
           "222:22"
         ];
         volumes = [
