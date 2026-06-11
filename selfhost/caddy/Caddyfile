@@ -19,15 +19,15 @@
 }
 
 silverbullet.lan {
-	reverse_proxy silverbullet:3000
+	reverse_proxy host.docker.internal:3001
 	import tls_lan_ca
 }
 miniflux.lan {
-	reverse_proxy miniflux:8080
+	reverse_proxy host.docker.internal:8080
 	import tls_lan_ca
 }
 rssbridge.lan {
-	reverse_proxy rssbridge:80
+	reverse_proxy host.docker.internal:8081
 	import tls_lan_ca
 }
 obsidian.lan {
@@ -43,7 +43,7 @@ libretranslate.lan {
 	import tls_lan_ca
 }
 syncthing.lan {
-	reverse_proxy syncthing:8384
+	reverse_proxy host.docker.internal:8384
 	import tls_lan_ca
 }
 wg-easy.lan {
@@ -51,7 +51,7 @@ wg-easy.lan {
 	import tls_lan_ca
 }
 http://forgejo.lan, https://forgejo.lan {
-	reverse_proxy forgejo:3000
+	reverse_proxy host.docker.internal:3000
 	import tls_lan_ca
 }
 http://tss.lan {
