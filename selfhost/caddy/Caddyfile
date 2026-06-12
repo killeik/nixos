@@ -22,10 +22,6 @@ silverbullet.lan {
 	reverse_proxy silverbullet:3000
 	import tls_lan_ca
 }
-terminus.lan {
-	reverse_proxy terminus-web:2300
-	import tls_lan_ca
-}
 miniflux.lan {
 	reverse_proxy miniflux:8080
 	import tls_lan_ca
@@ -60,6 +56,10 @@ http://forgejo.lan, https://forgejo.lan {
 }
 http://tss.lan {
 	reverse_proxy tss:8080
+	import tls_lan_ca
+}
+http://terminus.lan, https://terminus.lan {
+	reverse_proxy terminus-web:2300
 	import tls_lan_ca
 }
 example.lan {
