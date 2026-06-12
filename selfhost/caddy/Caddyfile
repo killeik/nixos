@@ -62,6 +62,10 @@ http://terminus.lan, https://terminus.lan {
 	reverse_proxy terminus-web:2300
 	import tls_lan_ca
 }
+http://larapaper.lan, https://larapaper.lan {
+	reverse_proxy larapaper:8080
+	import tls_lan_ca
+}
 example.lan {
 	import tls_lan_ca
 	respond "https on a local domain"
