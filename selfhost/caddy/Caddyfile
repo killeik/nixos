@@ -1,6 +1,9 @@
 (tls_cloudflare) {
 	tls {
 		dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+		resolvers 1.1.1.1
+		propagation_delay 10m
+		propagation_timeout 20m
 	}
 }
 
