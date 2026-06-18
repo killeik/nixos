@@ -15,31 +15,8 @@
 	boot.loader.systemd-boot.enable = true;
 	boot.loader.efi.canTouchEfiVariables = true;
 
-systemd.services.gitnix = {
-    description = "Git nix - does nix via git";
-    serviceConfig.Type = "oneshot";
-    path = with pkgs; [
-    	git
-    	nixos-rebuild
-    ];
-    script = ''
-      cd "/home/killeik/nixos"
-			git pull
-			nixos-rebuild switch --flake .
-    '';
-  };
-
   services.logind.settings.Login = {
     HandleLidSwitch = "ignore"; # Disable sleep on lid closed.
-  };
-
-  systemd.timers.gitnix = {
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnCalendar = "hourly";
-      Persistent = true;
-      Unit = "gitnix.service";
-    };
   };
 
  networking.hostName = "oggy"; # Define your hostname.

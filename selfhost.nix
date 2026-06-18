@@ -20,7 +20,6 @@ in
   system.activationScripts.selfhost-files = ''
     install -d -m 0755 -o killeik -g users ${selfhostDir}
     install -d -m 0755 -o killeik -g users ${selfhostDir}/caddy
-    install -d -m 0755 -o killeik -g users ${selfhostDir}/caddy/lan_ca
     # install -d -m 0755 -o killeik -g users ${selfhostDir}/terminus
     # install -d -m 0755 -o killeik -g users ${selfhostDir}/terminus/database
     # install -d -m 0755 -o killeik -g users ${selfhostDir}/terminus/keyvalue
@@ -58,15 +57,17 @@ in
 
     containers = {
       caddy = commonContainerOptions // {
-        image = "docker.io/caddy:2";
+        image = "docker.io/caddybuilds/caddy-cloudflare:latest";
         ports = [
           "80:80"
           "443:443"
           "443:443/udp"
         ];
+        environmentFiles = [
+          secretsFile
+        ];
         volumes = [
           "${selfhostDir}/caddy/Caddyfile:/etc/caddy/Caddyfile:ro"
-          "${selfhostDir}/caddy/lan_ca:/etc/caddy/lan_ca"
           "caddy_data:/data"
           "caddy_config:/config"
         ];
@@ -95,7 +96,7 @@ in
         environment = {
           RUN_MIGRATIONS = "1";
           FETCH_YOUTUBE_WATCH_TIME = "1";
-          BASE_URL = "https://miniflux.lan/";
+          BASE_URL = "https://miniflux.killeik.net/";
           HTTP_CLIENT_MAX_BODY_SIZE = "50";
         };
         environmentFiles = [

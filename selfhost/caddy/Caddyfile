@@ -1,72 +1,26 @@
-{
-  pki {
-		ca lan_ca {
-			name lan_ca
-			root {
-				cert /etc/caddy/lan_ca/ca.crt
-				key /etc/caddy/lan_ca/ca.key
-			}
-		}
-	}
-}
-
-(tls_lan_ca) {
+(tls_cloudflare) {
 	tls {
-		issuer internal {
-			ca lan_ca
-		}
+		dns cloudflare {env.CLOUDFLARE_API_TOKEN}
 	}
 }
 
-silverbullet.lan {
+silverbullet.killeik.net {
 	reverse_proxy silverbullet:3000
-	import tls_lan_ca
+	import tls_cloudflare
 }
-miniflux.lan {
+miniflux.killeik.net {
 	reverse_proxy miniflux:8080
-	import tls_lan_ca
+	import tls_cloudflare
 }
-rssbridge.lan {
-	reverse_proxy rssbridge:80
-	import tls_lan_ca
-}
-obsidian.lan {
-	reverse_proxy obsidian-couchdb:5984
-	import tls_lan_ca
-}
-immich.lan {
-	reverse_proxy immich_server:2283
-	import tls_lan_ca
-}
-libretranslate.lan {
-	reverse_proxy libretranslate:5000
-	import tls_lan_ca
-}
-syncthing.lan {
+syncthing.killeik.net {
 	reverse_proxy syncthing:8384
-	import tls_lan_ca
+	import tls_cloudflare
 }
-wg-easy.lan {
-	reverse_proxy wg-easy:51821
-	import tls_lan_ca
-}
-http://forgejo.lan, https://forgejo.lan {
+forgejo.killeik.net {
 	reverse_proxy forgejo:3000
-	import tls_lan_ca
+	import tls_cloudflare
 }
-http://tss.lan {
-	reverse_proxy tss:8080
-	import tls_lan_ca
-}
-http://terminus.lan, https://terminus.lan {
-	reverse_proxy terminus-web:2300
-	import tls_lan_ca
-}
-http://larapaper.lan, https://larapaper.lan {
+larapaper.killeik.net {
 	reverse_proxy larapaper:8080
-	import tls_lan_ca
-}
-example.lan {
-	import tls_lan_ca
-	respond "https on a local domain"
+	import tls_cloudflare
 }
