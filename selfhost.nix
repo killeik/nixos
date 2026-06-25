@@ -98,7 +98,7 @@ in
           FETCH_YOUTUBE_WATCH_TIME = "1";
           BASE_URL = "https://miniflux.killeik.net/";
           HTTP_CLIENT_MAX_BODY_SIZE = "50";
-          POLLING_LIMIT_PER_HOST = "5";
+          POLLING_LIMIT_PER_HOST = "15";
           POLLING_SCHEDULER = "entry_frequency";
           BATCH_SIZE = "50";
           POLLING_FREQUENCY = "90";
