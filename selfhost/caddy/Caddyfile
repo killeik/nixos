@@ -2,7 +2,7 @@
 	tls {
 		dns cloudflare {env.CLOUDFLARE_API_TOKEN}
 		resolvers 1.1.1.1
-		propagation_delay 10m
+		propagation_delay 1m
 		propagation_timeout 20m
 	}
 }
@@ -25,5 +25,29 @@ forgejo.killeik.net {
 }
 larapaper.killeik.net {
 	reverse_proxy larapaper:8080
+	import tls_cloudflare
+}
+music.killeik.net {
+	reverse_proxy navidrome:4533
+	import tls_cloudflare
+}
+lidarr.killeik.net {
+	reverse_proxy lidarr:8686
+	import tls_cloudflare
+}
+qbit.killeik.net {
+	reverse_proxy qbittorrent:8080
+	import tls_cloudflare
+}
+prowlarr.killeik.net {
+	reverse_proxy prowlarr:9696
+	import tls_cloudflare
+}
+slskd.killeik.net {
+	reverse_proxy slskd:5030
+	import tls_cloudflare
+}
+soularr.killeik.net {
+	reverse_proxy soularr:8265
 	import tls_cloudflare
 }

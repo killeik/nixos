@@ -20,6 +20,17 @@ in
   system.activationScripts.selfhost-files = ''
     install -d -m 0755 -o killeik -g users ${selfhostDir}
     install -d -m 0755 -o killeik -g users ${selfhostDir}/caddy
+    install -d -m 0755 -o killeik -g users ${selfhostDir}/downloads
+    install -d -m 0755 -o killeik -g users ${selfhostDir}/lidarr/config
+    install -d -m 0755 -o killeik -g users ${selfhostDir}/music
+    install -d -m 0755 -o killeik -g users ${selfhostDir}/navidrome/data
+    install -d -m 0755 -o killeik -g users ${selfhostDir}/prowlarr/config
+    install -d -m 0755 -o killeik -g users ${selfhostDir}/qbittorrent/config
+    install -d -m 0755 -o killeik -g users ${selfhostDir}/slskd
+    install -d -m 0755 -o killeik -g users ${selfhostDir}/soularr
+    if [ ! -e ${selfhostDir}/soularr/config.ini ]; then
+      install -m 0644 -o killeik -g users ${./selfhost/soularr/config.ini} ${selfhostDir}/soularr/config.ini
+    fi
     # install -d -m 0755 -o killeik -g users ${selfhostDir}/terminus
     # install -d -m 0755 -o killeik -g users ${selfhostDir}/terminus/database
     # install -d -m 0755 -o killeik -g users ${selfhostDir}/terminus/keyvalue
@@ -71,6 +82,16 @@ in
           "caddy_data:/data"
           "caddy_config:/config"
         ];
+      };
+
+      flaresolverr = commonContainerOptions // {
+        image = "ghcr.io/flaresolverr/flaresolverr:latest";
+        environment = {
+          LOG_LEVEL = "info";
+          LOG_HTML = "false";
+          CAPTCHA_SOLVER = "none";
+          TZ = "Europe/Moscow";
+        };
       };
 
       syncthing = commonContainerOptions // {
@@ -238,6 +259,101 @@ in
         volumes = [
           "${selfhostDir}/larapaper/database:/var/www/html/database/storage"
           "${selfhostDir}/larapaper/generated-images:/var/www/html/storage/app/public/images/generated"
+        ];
+      };
+
+      lidarr = commonContainerOptions // {
+        image = "lscr.io/linuxserver/lidarr:latest";
+        environment = {
+          PUID = "1000";
+          PGID = "100";
+          TZ = "Europe/Moscow";
+        };
+        volumes = [
+          "${selfhostDir}/lidarr/config:/config"
+          "${selfhostDir}/music:/music"
+          "${selfhostDir}/downloads:/downloads"
+        ];
+      };
+
+      navidrome = commonContainerOptions // {
+        image = "docker.io/deluan/navidrome:latest";
+        environment = {
+          ND_LOGLEVEL = "info";
+          ND_SCANSCHEDULE = "1h";
+          ND_SESSIONTIMEOUT = "24h";
+        };
+        volumes = [
+          "${selfhostDir}/navidrome/data:/data"
+          "${selfhostDir}/music:/music:ro"
+        ];
+      };
+
+      qbittorrent = commonContainerOptions // {
+        image = "lscr.io/linuxserver/qbittorrent:latest";
+        environment = {
+          PUID = "1000";
+          PGID = "100";
+          TZ = "Europe/Moscow";
+          WEBUI_PORT = "8080";
+        };
+        ports = [
+          "6881:6881/tcp"
+          "6881:6881/udp"
+        ];
+        volumes = [
+          "${selfhostDir}/qbittorrent/config:/config"
+          "${selfhostDir}/downloads:/downloads"
+        ];
+      };
+
+      prowlarr = commonContainerOptions // {
+        image = "lscr.io/linuxserver/prowlarr:latest";
+        dependsOn = [ "flaresolverr" ];
+        environment = {
+          PUID = "1000";
+          PGID = "100";
+          TZ = "Europe/Moscow";
+        };
+        volumes = [
+          "${selfhostDir}/prowlarr/config:/config"
+        ];
+      };
+
+      slskd = commonContainerOptions // {
+        image = "docker.io/slskd/slskd:latest";
+        user = "1000:100";
+        environment = {
+          SLSKD_DOWNLOADS_DIR = "/downloads";
+          TZ = "Europe/Moscow";
+          SLSKD_REMOTE_CONFIGURATION = "true";
+        };
+        ports = [
+          "50300:50300/tcp"
+        ];
+        volumes = [
+          "${selfhostDir}/slskd:/app"
+          "${selfhostDir}/downloads:/downloads"
+          "${selfhostDir}/music:/music:ro"
+        ];
+      };
+
+      soularr = commonContainerOptions // {
+        image = "docker.io/mrusse08/soularr:latest";
+        user = "1000:100";
+        dependsOn = [
+          "lidarr"
+          "slskd"
+        ];
+        environment = {
+          TZ = "Europe/Moscow";
+          SCRIPT_INTERVAL = "300";
+          WEBUI_ENABLED = "true";
+          WEBUI_PORT = "8265";
+        };
+        volumes = [
+          "${selfhostDir}/downloads:/downloads"
+          "${selfhostDir}/soularr:/data"
         ];
       };
     };

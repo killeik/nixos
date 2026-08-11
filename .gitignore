@@ -4,6 +4,9 @@ selfhost/*
 !selfhost/caddy/
 selfhost/caddy/*
 !selfhost/caddy/Caddyfile
+!selfhost/soularr/
+selfhost/soularr/*
+!selfhost/soularr/config.ini
 !selfhost/terminus/
 selfhost/terminus/*
 !selfhost/terminus/.env.example
