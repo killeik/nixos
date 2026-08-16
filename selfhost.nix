@@ -74,7 +74,9 @@ in
       "docker.service"
       "docker-network-selfhost.service"
     ];
+    partOf = [ "docker.service" ];
     before = [ "docker-slskd.service" ];
+    requiredBy = [ "docker-slskd.service" ];
     wantedBy = [ "multi-user.target" ];
     path = [ pkgs.iptables ];
     serviceConfig = {
@@ -87,12 +89,12 @@ in
       iptables -C DOCKER-USER -s ${slskdContainerIp}/32 -j SLSKD-GUARD 2>/dev/null \
         || iptables -I DOCKER-USER 1 -s ${slskdContainerIp}/32 -j SLSKD-GUARD
 
-      iptables -A SLSKD-GUARD -p tcp --syn \
-        -m connlimit --connlimit-above 512 --connlimit-mask 32 \
+      iptables -A SLSKD-GUARD -p tcp --syn -m conntrack --ctstate NEW \
+        -m connlimit --connlimit-above 256 --connlimit-mask 32 \
         -j REJECT --reject-with tcp-reset
-      iptables -A SLSKD-GUARD -p tcp --syn \
-        -m hashlimit --hashlimit-above 25/second --hashlimit-burst 100 \
-        --hashlimit-mode srcip --hashlimit-srcmask 32 --hashlimit-name slskd-new \
+      iptables -A SLSKD-GUARD -p tcp --syn -m conntrack --ctstate NEW \
+        -m hashlimit --hashlimit-above 8/second --hashlimit-burst 25 \
+        --hashlimit-mode srcip --hashlimit-srcmask 32 --hashlimit-name slskd-new-v2 \
         -j REJECT --reject-with tcp-reset
       iptables -A SLSKD-GUARD -j RETURN
     '';
