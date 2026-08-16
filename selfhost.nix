@@ -3,6 +3,7 @@
 let
   selfhostDir = "/home/killeik/selfhost";
   secretsFile = "${selfhostDir}/.env";
+  slskdContainerIp = "172.19.255.254";
   # terminusEnvFile = "${selfhostDir}/terminus/.env";
 
   commonContainerOptions = {
@@ -60,6 +61,45 @@ in
     };
     script = ''
       docker network inspect selfhost >/dev/null 2>&1 || docker network create selfhost
+    '';
+  };
+
+  systemd.services.slskd-conntrack-guard = {
+    description = "Limit outgoing Slskd connection bursts";
+    after = [
+      "docker.service"
+      "docker-network-selfhost.service"
+    ];
+    requires = [
+      "docker.service"
+      "docker-network-selfhost.service"
+    ];
+    before = [ "docker-slskd.service" ];
+    wantedBy = [ "multi-user.target" ];
+    path = [ pkgs.iptables ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    script = ''
+      iptables -N SLSKD-GUARD 2>/dev/null || true
+      iptables -F SLSKD-GUARD
+      iptables -C DOCKER-USER -s ${slskdContainerIp}/32 -j SLSKD-GUARD 2>/dev/null \
+        || iptables -I DOCKER-USER 1 -s ${slskdContainerIp}/32 -j SLSKD-GUARD
+
+      iptables -A SLSKD-GUARD -p tcp --syn \
+        -m connlimit --connlimit-above 512 --connlimit-mask 32 \
+        -j REJECT --reject-with tcp-reset
+      iptables -A SLSKD-GUARD -p tcp --syn \
+        -m hashlimit --hashlimit-above 25/second --hashlimit-burst 100 \
+        --hashlimit-mode srcip --hashlimit-srcmask 32 --hashlimit-name slskd-new \
+        -j REJECT --reject-with tcp-reset
+      iptables -A SLSKD-GUARD -j RETURN
+    '';
+    preStop = ''
+      iptables -D DOCKER-USER -s ${slskdContainerIp}/32 -j SLSKD-GUARD 2>/dev/null || true
+      iptables -F SLSKD-GUARD 2>/dev/null || true
+      iptables -X SLSKD-GUARD 2>/dev/null || true
     '';
   };
 
@@ -324,12 +364,23 @@ in
         image = "docker.io/slskd/slskd:latest";
         user = "1000:100";
         environment = {
+          SLSKD_DOWNLOAD_SLOTS = "20";
           SLSKD_DOWNLOADS_DIR = "/downloads";
           TZ = "Europe/Moscow";
           SLSKD_REMOTE_CONFIGURATION = "true";
+          SLSKD_SLSK_DNET_CHILDREN = "5";
+          SLSKD_SLSK_DNET_NO_CHILDREN = "true";
+          SLSKD_THROTTLING_SEARCH_INCOMING_CIRCUIT_BREAKER = "100";
+          SLSKD_THROTTLING_SEARCH_INCOMING_CONCURRENCY = "2";
+          SLSKD_THROTTLING_SEARCH_INCOMING_RESPONSE_FILE_LIMIT = "100";
+          SLSKD_UPLOAD_SLOTS = "5";
         };
         ports = [
           "50300:50300/tcp"
+        ];
+        extraOptions = commonContainerOptions.extraOptions ++ [
+          "--ip=${slskdContainerIp}"
+          "--ulimit=nofile=2048:2048"
         ];
         volumes = [
           "${selfhostDir}/slskd:/app"
