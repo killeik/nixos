@@ -51,3 +51,9 @@ soularr.killeik.net {
 	reverse_proxy soularr:8265
 	import tls_cloudflare
 }
+grafana.killeik.net {
+	reverse_proxy unix//run/grafana/grafana.sock {
+		header_up Host {host}
+	}
+	import tls_cloudflare
+}
