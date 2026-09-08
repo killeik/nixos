@@ -11,6 +11,10 @@ silverbullet.killeik.net {
 	reverse_proxy silverbullet:3000
 	import tls_cloudflare
 }
+t3.killeik.net {
+	reverse_proxy 10.231.40.2:3773
+	import tls_cloudflare
+}
 miniflux.killeik.net {
 	reverse_proxy miniflux:8080
 	import tls_cloudflare
@@ -21,6 +25,10 @@ syncthing.killeik.net {
 }
 forgejo.killeik.net {
 	reverse_proxy forgejo:3000
+	import tls_cloudflare
+}
+excalidash.killeik.net {
+	reverse_proxy excalidash-frontend:80
 	import tls_cloudflare
 }
 larapaper.killeik.net {

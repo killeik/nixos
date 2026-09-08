@@ -2,7 +2,6 @@
 
 let
   selfhostDir = "/home/killeik/selfhost";
-  secretsFile = "${selfhostDir}/.env";
   slskdContainerIp = "172.19.255.254";
 
   commonContainerOptions = {
@@ -13,14 +12,18 @@ let
   };
 in
 {
-  environment.systemPackages = with pkgs; [
-    docker
-  ];
-
   system.activationScripts.selfhost-files = ''
     install -d -m 0755 -o killeik -g users ${selfhostDir}
     install -d -m 0755 -o killeik -g users ${selfhostDir}/caddy
     install -d -m 0755 -o killeik -g users ${selfhostDir}/downloads
+    install -d -m 0755 -o 1001 -g 1001 ${selfhostDir}/excalidash
+    install -d -m 0755 -o 1001 -g 1001 ${selfhostDir}/excalidash/backups
+    install -d -m 0755 -o 1001 -g 1001 ${selfhostDir}/excalidash/prisma
+    if [ ! -e ${selfhostDir}/excalidash/backend.env ]; then
+      install -m 0600 -o root -g root /dev/null ${selfhostDir}/excalidash/backend.env
+      printf 'API_KEY_HASH_PEPPER=%s\n' "$(${pkgs.openssl}/bin/openssl rand -hex 32)" \
+        > ${selfhostDir}/excalidash/backend.env
+    fi
     install -d -m 0755 -o killeik -g users ${selfhostDir}/lidarr/config
     install -d -m 0755 -o killeik -g users ${selfhostDir}/music
     install -d -m 0755 -o killeik -g users ${selfhostDir}/navidrome/data
@@ -28,6 +31,7 @@ in
     install -d -m 0755 -o killeik -g users ${selfhostDir}/qbittorrent/config
     install -d -m 0755 -o killeik -g users ${selfhostDir}/slskd
     install -d -m 0755 -o killeik -g users ${selfhostDir}/soularr
+    # Bootstrap template only; subsequent settings are managed in the running instance.
     if [ ! -e ${selfhostDir}/soularr/config.ini ]; then
       install -m 0644 -o killeik -g users ${./selfhost/soularr/config.ini} ${selfhostDir}/soularr/config.ini
     fi
@@ -55,7 +59,7 @@ in
       RemainAfterExit = true;
     };
     script = ''
-      docker network inspect selfhost >/dev/null 2>&1 || docker network create selfhost
+      docker network inspect selfhost >/dev/null 2>&1 || docker network create --subnet=172.19.0.0/16 selfhost
     '';
   };
 
@@ -112,7 +116,7 @@ in
           "443:443/udp"
         ];
         environmentFiles = [
-          secretsFile
+          "${selfhostDir}/caddy.env"
         ];
         volumes = [
           "${selfhostDir}/caddy/Caddyfile:/etc/caddy/Caddyfile:ro"
@@ -120,6 +124,37 @@ in
           "caddy_data:/data"
           "caddy_config:/config"
         ];
+      };
+
+      excalidash-backend = commonContainerOptions // {
+        image = "docker.io/zimengxiong/excalidash-backend:latest";
+        environmentFiles = [
+          "${selfhostDir}/excalidash/backend.env"
+        ];
+        environment = {
+          AUTH_MODE = "local";
+          BACKUP_DIR = "/app/backups";
+          BACKUP_RETENTION_DAYS = "14";
+          BACKUP_SCHEDULE = "0 0 4 * * *";
+          DATABASE_PROVIDER = "sqlite";
+          DATABASE_URL = "file:/app/prisma/dev.db";
+          FRONTEND_URL = "https://excalidash.killeik.net";
+          NODE_ENV = "production";
+          PORT = "8000";
+          TRUST_PROXY = "2";
+        };
+        volumes = [
+          "${selfhostDir}/excalidash/backups:/app/backups"
+          "${selfhostDir}/excalidash/prisma:/app/prisma"
+        ];
+      };
+
+      excalidash-frontend = commonContainerOptions // {
+        image = "docker.io/zimengxiong/excalidash-frontend:latest";
+        dependsOn = [ "excalidash-backend" ];
+        environment = {
+          BACKEND_URL = "excalidash-backend:8000";
+        };
       };
 
       flaresolverr = commonContainerOptions // {
@@ -163,7 +198,7 @@ in
           POLLING_FREQUENCY = "90";
         };
         environmentFiles = [
-          secretsFile
+          "${selfhostDir}/miniflux.env"
         ];
       };
 
@@ -173,7 +208,7 @@ in
           POSTGRES_USER = "miniflux";
         };
         environmentFiles = [
-          secretsFile
+          "${selfhostDir}/postgres.env"
         ];
         volumes = [
           "${selfhostDir}/miniflux-db:/var/lib/postgresql/data"
@@ -187,7 +222,7 @@ in
       silverbullet = commonContainerOptions // {
         image = "ghcr.io/silverbulletmd/silverbullet:latest";
         environmentFiles = [
-          secretsFile
+          "${selfhostDir}/silverbullet.env"
         ];
         volumes = [
           "${selfhostDir}/silverbullet/space:/space"
@@ -195,17 +230,25 @@ in
       };
 
       forgejo = commonContainerOptions // {
-        image = "codeberg.org/forgejo/forgejo:13";
+        image = "codeberg.org/forgejo/forgejo:16";
         environment = {
           USER_UID = "1001";
           USER_GID = "1001";
+          FORGEJO__server__ROOT_URL = "https://forgejo.killeik.net/";
+          FORGEJO__server__DOMAIN = "forgejo.killeik.net";
+          FORGEJO__server__SSH_DOMAIN = "forgejo.killeik.net";
+          FORGEJO__server__LANDING_PAGE = "explore";
+          FORGEJO__repository__DISABLE_STARS = "true";
+          FORGEJO__service__SHOW_MILESTONES_DASHBOARD_PAGE = "false";
+          FORGEJO__service__ENABLE_TIMETRACKING = "false";
+          FORGEJO__service_0X2E_explore__DISABLE_USERS_PAGE = "true";
+          FORGEJO__service_0X2E_explore__DISABLE_ORGANIZATIONS_PAGE = "true";
         };
         ports = [
           "222:22"
         ];
         volumes = [
           "${selfhostDir}/forgejo:/data"
-          "/etc/timezone:/etc/timezone:ro"
           "/etc/localtime:/etc/localtime:ro"
         ];
       };
