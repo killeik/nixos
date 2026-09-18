@@ -193,6 +193,7 @@ in
           BASE_URL = "https://miniflux.killeik.net/";
           HTTP_CLIENT_MAX_BODY_SIZE = "50";
           POLLING_LIMIT_PER_HOST = "30";
+          POLLING_PARSING_ERROR_LIMIT = "0";
           POLLING_SCHEDULER = "entry_frequency";
           BATCH_SIZE = "50";
           POLLING_FREQUENCY = "90";
