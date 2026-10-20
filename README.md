@@ -36,6 +36,20 @@ nix run nixpkgs#nixos-rebuild -- switch --flake .#oggy --target-host oggy.home.a
 
 `selfhost/soularr/config.ini` - начальный шаблон, рабочие настройки живут на сервере.
 
+## Qingping Air Monitor Lite
+
+CGDN1 подключен к `Smetankovy` по WPA2 и к Mosquitto на `192.168.1.2:1883`.
+Показания публикуются в `qingping/ccb5d1327498/up`, команды отправляются в
+`qingping/ccb5d1327498/down`. MQTT-пользователь `qingping` имеет доступ только
+к `qingping/ccb5d1327498/#`.
+
+Секреты находятся на oggy в `/var/lib/qingping/` (`root:root`, каталог `0700`,
+файлы `0600`): `mqtt-password` используется Mosquitto, `link-token` нужен
+для повторной локальной настройки по BLE. В Git их не добавлять.
+
+На OpenWrt правило `firewall.qingping_mqtt` разрешает только TCP от Wi-Fi MAC
+`cc:b5:d1:32:74:98` из зоны `guest` к `192.168.1.2:1883` в зоне `lan`.
+
 ## Обновление DNS-записи Cloudflare
 
 ```shell

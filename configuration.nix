@@ -24,6 +24,21 @@
 
   hardware.bluetooth.enable = true;
 
+  services.mosquitto = {
+    enable = true;
+    listeners = [
+      {
+        address = "192.168.1.2";
+        users.qingping = {
+          passwordFile = "/var/lib/qingping/mqtt-password";
+          acl = [ "readwrite qingping/ccb5d1327498/#" ];
+        };
+      }
+    ];
+  };
+
+  networking.firewall.allowedTCPPorts = [ 1883 ];
+
   time.timeZone = "Europe/Moscow";
 
   virtualisation.docker.enable = true;
