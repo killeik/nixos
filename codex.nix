@@ -8,9 +8,14 @@
     privateNetwork = true;
     hostAddress = "10.231.40.1";
     localAddress = "10.231.40.2";
-    config = { pkgs, ... }: {
+    config = { pkgs, ... }: let
+      t3codeNightly = pkgs.callPackage ./t3code-nightly.nix { };
+    in {
       system.stateVersion = "25.11";
       networking.hostName = "codex";
+      environment.etc."machine-info".text = ''
+        PRETTY_HOSTNAME="oggy"
+      '';
       networking.useHostResolvConf = false;
       networking.nameservers = [ "192.168.1.1" ];
       networking.enableIPv6 = false;
@@ -28,7 +33,7 @@
         openssh.authorizedKeys.keys = config.users.users.killeik.openssh.authorizedKeys.keys;
       };
       environment.systemPackages = with pkgs; [
-        codex t3code git ripgrep tmux curl jq nodejs python3 uv gcc gnumake pkg-config
+        t3codeNightly git ripgrep tmux curl jq nodejs python3 uv gcc gnumake pkg-config
       ];
       programs.nix-ld.enable = true;
       environment.localBinInPath = true;
@@ -39,12 +44,12 @@
         wants = [ "network-online.target" ];
         environment = {
           HOME = "/home/codex";
-          PATH = pkgs.lib.mkForce "/home/codex/.local/bin:${pkgs.lib.makeBinPath (with pkgs; [ codex git ripgrep nodejs bash coreutils openssh ])}";
+          PATH = pkgs.lib.mkForce "/home/codex/.local/bin:${pkgs.lib.makeBinPath (with pkgs; [ git ripgrep nodejs bash coreutils openssh ])}";
         };
         serviceConfig = {
           User = "codex";
           WorkingDirectory = "/home/codex";
-          ExecStart = "${pkgs.t3code}/bin/t3 serve --host 0.0.0.0 --port 3773";
+          ExecStart = "${t3codeNightly}/bin/t3 serve --host 0.0.0.0 --port 3773";
           Restart = "on-failure";
           RestartSec = 10;
           UMask = "0077";

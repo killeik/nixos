@@ -9,6 +9,7 @@
     ./monitoring.nix
     ./selfhost.nix
     ./codex.nix
+    ./qingping.nix
   ];
 
   boot.loader.systemd-boot.enable = true;
@@ -21,6 +22,27 @@
   networking.hostName = "oggy";
 
   networking.networkmanager.enable = true;
+
+  hardware.bluetooth.enable = true;
+
+  services.mosquitto = {
+    enable = true;
+    listeners = [
+      {
+        address = "192.168.1.2";
+        users.qingping = {
+          passwordFile = "/var/lib/qingping/mqtt-password";
+          acl = [ "readwrite qingping/ccb5d1327498/#" ];
+        };
+        users.qingping-metrics = {
+          passwordFile = "/var/lib/qingping/metrics-password";
+          acl = [ "read qingping/ccb5d1327498/up" ];
+        };
+      }
+    ];
+  };
+
+  networking.firewall.allowedTCPPorts = [ 1883 ];
 
   time.timeZone = "Europe/Moscow";
 

@@ -65,3 +65,9 @@ grafana.killeik.net {
 	}
 	import tls_cloudflare
 }
+
+http://:3000 {
+	reverse_proxy unix//run/grafana/grafana.sock {
+		header_up Host {host}
+	}
+}

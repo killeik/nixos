@@ -26,6 +26,7 @@ in
     fi
     install -d -m 0755 -o killeik -g users ${selfhostDir}/lidarr/config
     install -d -m 0755 -o killeik -g users ${selfhostDir}/music
+    install -d -m 0700 -o 999 -g 999 ${selfhostDir}/miniflux-postgres
     install -d -m 0755 -o killeik -g users ${selfhostDir}/navidrome/data
     install -d -m 0755 -o killeik -g users ${selfhostDir}/prowlarr/config
     install -d -m 0755 -o killeik -g users ${selfhostDir}/qbittorrent/config
@@ -47,6 +48,7 @@ in
   '';
 
   systemd.services.docker-caddy.restartTriggers = [ ./selfhost/caddy/Caddyfile ];
+  systemd.services.docker-caddy.after = [ "grafana.service" ];
   systemd.services.docker-network-selfhost = {
     wantedBy = [ "multi-user.target" ];
     requiredBy = [ "docker-caddy.service" ];
@@ -193,6 +195,7 @@ in
           BASE_URL = "https://miniflux.killeik.net/";
           HTTP_CLIENT_MAX_BODY_SIZE = "50";
           POLLING_LIMIT_PER_HOST = "30";
+          POLLING_PARSING_ERROR_LIMIT = "0";
           POLLING_SCHEDULER = "entry_frequency";
           BATCH_SIZE = "50";
           POLLING_FREQUENCY = "90";
@@ -203,7 +206,7 @@ in
       };
 
       miniflux-db = commonContainerOptions // {
-        image = "docker.io/postgres:15";
+        image = "docker.io/postgres:18";
         environment = {
           POSTGRES_USER = "miniflux";
         };
@@ -211,7 +214,7 @@ in
           "${selfhostDir}/postgres.env"
         ];
         volumes = [
-          "${selfhostDir}/miniflux-db:/var/lib/postgresql/data"
+          "${selfhostDir}/miniflux-postgres:/var/lib/postgresql"
         ];
       };
 
@@ -230,7 +233,7 @@ in
       };
 
       forgejo = commonContainerOptions // {
-        image = "codeberg.org/forgejo/forgejo:16";
+        image = "codeberg.org/forgejo/forgejo:17";
         environment = {
           USER_UID = "1001";
           USER_GID = "1001";
