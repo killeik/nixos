@@ -7,6 +7,7 @@
   imports = [
     ./hardware-configuration.nix
     ./monitoring.nix
+    ./backups.nix
     ./selfhost.nix
     ./codex.nix
     ./qingping.nix
