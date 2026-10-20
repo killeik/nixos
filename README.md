@@ -61,6 +61,26 @@ T3 использует официальный nightly runtime и штатную
 Схема хранения и восстановление: [docs/backups.md](docs/backups.md).
 Nix GC запускается еженедельно и удаляет поколения старше 30 дней.
 
+## Структура
+
+`flake.nix` выбирает хост. `hosts/oggy/default.nix` содержит настройки хоста
+и общие параметры в `_module.args.oggy`; модули запрашивают `{ oggy, ... }`
+без импорта отдельного values-файла. Эти параметры используются в настройках,
+а не при вычислении `imports`. Внутри контейнера они доступны через внешний scope.
+
+В `hosts/oggy/selfhost/` находятся сервисы oggy: Docker stack в `default.nix`,
+мониторинг, `smarthome.nix`, контейнер Codex и резервные копии.
+Caddyfile, Grafana dashboards и начальный Soularr config лежат рядом с сервисами.
+Runtime state по-прежнему находится на сервере в `/home/killeik/selfhost`.
+
+`hosts/selfhost-remote/default.nix` - заготовка будущей QEMU VM, а не копия
+сервисов oggy. Перед использованием проверить `/dev/sda`, `ens3`, доступ
+и набор сервисов. Имя flake target `selfhost-remote` сохранено; disko не запускать
+по шаблонному устройству без проверки конкретной машины.
+
+История решений: [docs/archive/2026-10-21-maintenance.md](docs/archive/2026-10-21-maintenance.md).
+Архив фиксирует контекст на дату обсуждения; последующие решения могут отличаться.
+
 ## Конфиги и секреты
 
 Рабочие env-файлы находятся в `/home/killeik/selfhost` на oggy
@@ -75,11 +95,11 @@ Nix GC запускается еженедельно и удаляет поко�
 
 Общий `.env` больше не используется. При восстановлении сначала создать эти
 файлы с согласованными значениями, затем запускать сервисы. Шаблон имен
-переменных: `selfhost/.env.example`. Рабочие значения брать из резервной копии.
+переменных: `hosts/oggy/selfhost/.env.example`. Рабочие значения брать из резервной копии.
 
 Форматировать Nix-файлы командой `nix fmt`, проверять формат - `nix fmt -- --ci`.
 
-`selfhost/soularr/config.ini` - начальный шаблон, рабочие настройки живут на сервере.
+`hosts/oggy/selfhost/soularr/config.ini` - начальный шаблон, рабочие настройки живут на сервере.
 
 ## Qingping Air Monitor Lite
 
@@ -108,9 +128,9 @@ CGDN1 подключен к `Smetankovy` по WPA2 и к Mosquitto на `192.168
 
 Дашборд: `http://192.168.1.2:3000/d/qingping-air` или
 `https://grafana.killeik.net/d/qingping-air`. Используется обычный вход Grafana.
-Макет хранится в `dashboards/qingping.json`, период по умолчанию - сутки.
+Макет хранится в `hosts/oggy/selfhost/grafana/dashboards/qingping.json`, период по умолчанию - сутки.
 
-Алерты Grafana описаны в `qingping.nix`: CO2 выше 1500 ppm в течение 10 минут,
+Алерты Grafana описаны в `hosts/oggy/selfhost/smarthome.nix`: CO2 выше 1500 ppm в течение 10 минут,
 влажность ниже 30% или выше 60% в течение 30 минут. Проверка раз в минуту,
 уведомления идут в Telegram при срабатывании и завершении, повтор - через 4 часа.
 Отсутствие данных не вызывает эти алерты.

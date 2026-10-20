@@ -5,13 +5,19 @@
 
 {
   imports = [
-    ./hardware-configuration.nix
-    ./monitoring.nix
-    ./backups.nix
-    ./selfhost.nix
-    ./codex.nix
-    ./qingping.nix
+    ./hardware.nix
+    ./selfhost
   ];
+
+  # Shared host parameters are module arguments, not separately imported values.
+  _module.args.oggy = {
+    lanAddress = "192.168.1.2";
+    dnsAddress = "192.168.1.1";
+    externalInterface = "enp0s20f0u3u4";
+    dockerSubnet = "172.19.0.0/16";
+    slskdAddress = "172.19.255.254";
+    qingpingDeviceId = "ccb5d1327498";
+  };
 
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
@@ -25,25 +31,6 @@
   networking.networkmanager.enable = true;
 
   hardware.bluetooth.enable = true;
-
-  services.mosquitto = {
-    enable = true;
-    listeners = [
-      {
-        address = "192.168.1.2";
-        users.qingping = {
-          passwordFile = "/var/lib/qingping/mqtt-password";
-          acl = [ "readwrite qingping/ccb5d1327498/#" ];
-        };
-        users.qingping-metrics = {
-          passwordFile = "/var/lib/qingping/metrics-password";
-          acl = [ "read qingping/ccb5d1327498/up" ];
-        };
-      }
-    ];
-  };
-
-  networking.firewall.allowedTCPPorts = [ 1883 ];
 
   time.timeZone = "Europe/Moscow";
 

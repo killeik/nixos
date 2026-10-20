@@ -21,12 +21,12 @@
         system = "x86_64-linux";
         modules = [
           disko.nixosModules.disko
-          ./selfhost-remote.nix
+          ./hosts/selfhost-remote
         ];
       };
       nixosConfigurations.oggy = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
-        modules = [ ./configuration.nix ];
+        modules = [ ./hosts/oggy ];
       };
     };
 }

@@ -1,4 +1,9 @@
-{ config, pkgs, ... }:
+{
+  config,
+  pkgs,
+  oggy,
+  ...
+}:
 {
   # The persistent root is a Btrfs subvolume, prepared before first activation.
   containers.codex = {
@@ -17,7 +22,7 @@
           PRETTY_HOSTNAME="oggy"
         '';
         networking.useHostResolvConf = false;
-        networking.nameservers = [ "192.168.1.1" ];
+        networking.nameservers = [ oggy.dnsAddress ];
         networking.enableIPv6 = false;
         services.openssh = {
           enable = true;
@@ -79,7 +84,7 @@
 
   networking.nat = {
     enable = true;
-    externalInterface = "enp0s20f0u3u4";
+    externalInterface = oggy.externalInterface;
     internalInterfaces = [ "ve-codex" ];
   };
   # Host access is blocked by the host firewall. Restrict forwarded traffic too.
@@ -87,8 +92,8 @@
     iptables -N CODEX-EGRESS 2>/dev/null || true
     iptables -F CODEX-EGRESS
     iptables -A CODEX-EGRESS -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-    iptables -A CODEX-EGRESS -d 192.168.1.1 -p udp --dport 53 -j ACCEPT
-    iptables -A CODEX-EGRESS -d 192.168.1.1 -p tcp --dport 53 -j ACCEPT
+    iptables -A CODEX-EGRESS -d ${oggy.dnsAddress} -p udp --dport 53 -j ACCEPT
+    iptables -A CODEX-EGRESS -d ${oggy.dnsAddress} -p tcp --dport 53 -j ACCEPT
     for subnet in 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 169.254.0.0/16; do
       iptables -A CODEX-EGRESS -d "$subnet" -j REJECT
     done

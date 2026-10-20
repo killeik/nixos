@@ -1,6 +1,6 @@
 # Резервные копии oggy
 
-`backups.nix` подключается из `configuration.nix`. Штатный таймер
+`hosts/oggy/selfhost/backups.nix` подключается через модуль selfhost хоста oggy. Штатный таймер
 `btrbk-oggy.timer` ежедневно запускает `btrbk-oggy.service`. Пропущенный запуск
 догоняется после включения сервера.
 
@@ -68,7 +68,7 @@ metadata: retention не гарантирует фиксированный ра�
 В репозитории:
 
 ```shell
-git add -- backups.nix scripts/backup-databases.py docs/backups.md
+git add -- hosts/oggy/selfhost/backups.nix scripts/backup-databases.py docs/backups.md
 nix flake check
 nix eval --json .#nixosConfigurations.oggy.config.systemd.services.btrbk-oggy.serviceConfig
 nix eval --json .#nixosConfigurations.oggy.config.nix.gc
@@ -139,3 +139,6 @@ WAL-mode SQLite может требовать создать shm при обыч
 Miniflux dump из снимка полностью восстановлен в отдельную временную БД;
 счетчики 1 user, 153 feeds, 1879 entries совпали. Тестовая БД удалена.
 Старые manual snapshots и standalone dumps очищены после этих проверок.
+
+TODO: Добавить зашифрованное удаленное хранение копий. Назначение и recovery key
+еще не выбраны; сейчас снимки на том же диске не защищают от его потери.

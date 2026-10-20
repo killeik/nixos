@@ -1,6 +1,9 @@
-{ pkgs, ... }:
+{ pkgs, oggy, ... }:
 
 {
+  virtualisation.oci-containers.containers.caddy.ports = [ "${oggy.lanAddress}:3000:3000" ];
+  networking.firewall.allowedTCPPorts = [ 3000 ];
+
   services.grafana = {
     enable = true;
 
@@ -19,6 +22,7 @@
       datasources = [
         {
           name = "Prometheus";
+          uid = "PBFA97CFB590B2093";
           type = "prometheus";
           access = "proxy";
           url = "http://127.0.0.1:9090";

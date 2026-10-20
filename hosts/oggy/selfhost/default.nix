@@ -1,9 +1,10 @@
-{ pkgs, ... }:
+{ pkgs, oggy, ... }:
 
 let
   selfhostDir = "/home/killeik/selfhost";
-  slskdContainerIp = "172.19.255.254";
+  slskdContainerIp = oggy.slskdAddress;
 
+  # PUID/PGID and user 1000:100 below match oggy killeik:users on shared media.
   commonContainerOptions = {
     pull = "always";
     extraOptions = [
@@ -12,10 +13,19 @@ let
   };
 in
 {
+  imports = [
+    ./monitoring.nix
+    ./smarthome.nix
+    ./codex.nix
+    ./backups.nix
+  ];
+
   system.activationScripts.selfhost-files = ''
     install -d -m 0755 -o killeik -g users ${selfhostDir}
     install -d -m 0755 -o killeik -g users ${selfhostDir}/caddy
     install -d -m 0755 -o killeik -g users ${selfhostDir}/downloads
+    # Excalidash backend runs as nodejs UID 1001 (primary GID 65533).
+    # Owner access is required; retain the existing on-disk GID 1001.
     install -d -m 0755 -o 1001 -g 1001 ${selfhostDir}/excalidash
     install -d -m 0755 -o 1001 -g 1001 ${selfhostDir}/excalidash/backups
     install -d -m 0755 -o 1001 -g 1001 ${selfhostDir}/excalidash/prisma
@@ -26,6 +36,7 @@ in
     fi
     install -d -m 0755 -o killeik -g users ${selfhostDir}/lidarr/config
     install -d -m 0755 -o killeik -g users ${selfhostDir}/music
+    # docker.io/postgres:18 uses postgres 999:999 for its bind-mounted data.
     install -d -m 0700 -o 999 -g 999 ${selfhostDir}/miniflux-postgres
     install -d -m 0755 -o killeik -g users ${selfhostDir}/navidrome/data
     install -d -m 0755 -o killeik -g users ${selfhostDir}/prowlarr/config
@@ -34,8 +45,9 @@ in
     install -d -m 0755 -o killeik -g users ${selfhostDir}/soularr
     # Bootstrap template only; subsequent settings are managed in the running instance.
     if [ ! -e ${selfhostDir}/soularr/config.ini ]; then
-      install -m 0644 -o killeik -g users ${./selfhost/soularr/config.ini} ${selfhostDir}/soularr/config.ini
+      install -m 0644 -o killeik -g users ${./soularr/config.ini} ${selfhostDir}/soularr/config.ini
     fi
+    # ghcr.io/usetrmnl/larapaper uses www-data 82:82 for SQLite and images.
     install -d -m 0755 -o 82 -g 82 ${selfhostDir}/larapaper/database
     install -d -m 0755 -o 82 -g 82 ${selfhostDir}/larapaper/generated-images
     if [ ! -e ${selfhostDir}/larapaper/database/database.sqlite ]; then
@@ -44,10 +56,10 @@ in
       chown 82:82 ${selfhostDir}/larapaper/database/database.sqlite
       chmod 0644 ${selfhostDir}/larapaper/database/database.sqlite
     fi
-    install -m 0644 -o killeik -g users ${./selfhost/caddy/Caddyfile} ${selfhostDir}/caddy/Caddyfile
+    install -m 0644 -o killeik -g users ${./caddy/Caddyfile} ${selfhostDir}/caddy/Caddyfile
   '';
 
-  systemd.services.docker-caddy.restartTriggers = [ ./selfhost/caddy/Caddyfile ];
+  systemd.services.docker-caddy.restartTriggers = [ ./caddy/Caddyfile ];
   systemd.services.docker-caddy.after = [ "grafana.service" ];
   systemd.services.docker-network-selfhost = {
     wantedBy = [ "multi-user.target" ];
@@ -61,7 +73,7 @@ in
       RemainAfterExit = true;
     };
     script = ''
-      docker network inspect selfhost >/dev/null 2>&1 || docker network create --subnet=172.19.0.0/16 selfhost
+      docker network inspect selfhost >/dev/null 2>&1 || docker network create --subnet=${oggy.dockerSubnet} selfhost
     '';
   };
 

@@ -1,6 +1,8 @@
 { pkgs, ... }:
 
 {
+  # TODO: Add encrypted offsite storage after choosing a destination and recovery key.
+  # These same-disk snapshots cannot recover a failed or lost disk.
   services.btrbk.instances.oggy = {
     onCalendar = "daily";
     settings = {
@@ -24,7 +26,7 @@
     path = [ pkgs.docker ];
     serviceConfig = {
       # Only the database preparation needs root; btrbk keeps its sudo backend.
-      ExecStartPre = "+${pkgs.python3}/bin/python3 ${./scripts/backup-databases.py}";
+      ExecStartPre = "+${pkgs.python3}/bin/python3 ${../../../scripts/backup-databases.py}";
       StateDirectoryMode = "0750";
       TimeoutStartSec = "30min";
       UMask = "0077";

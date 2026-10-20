@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, oggy, ... }:
 
 let
   mqtt2prometheus = pkgs.buildGoModule {
@@ -24,10 +24,10 @@ let
 
   exporterConfig = (pkgs.formats.yaml { }).generate "qingping-mqtt.yaml" {
     mqtt = {
-      server = "tcp://192.168.1.2:1883";
+      server = "tcp://${oggy.lanAddress}:1883";
       user = "qingping-metrics";
       client_id = "qingping-prometheus";
-      topic_path = "qingping/ccb5d1327498/up";
+      topic_path = "qingping/${oggy.qingpingDeviceId}/up";
       device_id_regex = "qingping/(?P<deviceid>[^/]+)/up";
       qos = 1;
     };
@@ -134,6 +134,25 @@ let
     };
 in
 {
+  services.mosquitto = {
+    enable = true;
+    listeners = [
+      {
+        address = oggy.lanAddress;
+        users.qingping = {
+          passwordFile = "/var/lib/qingping/mqtt-password";
+          acl = [ "readwrite qingping/${oggy.qingpingDeviceId}/#" ];
+        };
+        users.qingping-metrics = {
+          passwordFile = "/var/lib/qingping/metrics-password";
+          acl = [ "read qingping/${oggy.qingpingDeviceId}/up" ];
+        };
+      }
+    ];
+  };
+
+  networking.firewall.allowedTCPPorts = [ 1883 ];
+
   systemd.services.qingping-exporter = {
     description = "Qingping MQTT to Prometheus exporter";
     wantedBy = [ "multi-user.target" ];
@@ -174,7 +193,7 @@ in
       umask 077
       printf -- '-P %s\n' "$(cat "$CREDENTIALS_DIRECTORY/mqtt-password")" > "$RUNTIME_DIRECTORY/mosquitto.conf"
       exec ${pkgs.mosquitto}/bin/mosquitto_pub -o "$RUNTIME_DIRECTORY/mosquitto.conf" \
-        -h 192.168.1.2 -u qingping -q 1 -r -t qingping/ccb5d1327498/down \
+        -h ${oggy.lanAddress} -u qingping -q 1 -r -t qingping/${oggy.qingpingDeviceId}/down \
         -m '{"type":"12","up_itvl":"60","duration":"3600"}'
     '';
   };
@@ -199,7 +218,7 @@ in
     {
       name = "qingping";
       folder = "Home";
-      options.path = ./dashboards;
+      options.path = ./grafana/dashboards;
     }
   ];
 
@@ -274,6 +293,4 @@ in
     ];
   };
 
-  virtualisation.oci-containers.containers.caddy.ports = [ "192.168.1.2:3000:3000" ];
-  networking.firewall.allowedTCPPorts = [ 3000 ];
 }
