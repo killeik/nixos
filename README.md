@@ -50,6 +50,21 @@ CGDN1 подключен к `Smetankovy` по WPA2 и к Mosquitto на `192.168
 На OpenWrt правило `firewall.qingping_mqtt` разрешает только TCP от Wi-Fi MAC
 `cc:b5:d1:32:74:98` из зоны `guest` к `192.168.1.2:1883` в зоне `lan`.
 
+`qingping-exporter` читает MQTT и отдает метрики на `127.0.0.1:9641`.
+Его отдельный пользователь `qingping-metrics` имеет только чтение топика
+показаний. Пароль хранится в `/var/lib/qingping/metrics-password` (`root:root`,
+`0600`) и передается через systemd credentials.
+
+Таймер `qingping-reporting` раз в 50 минут продлевает часовую сессию отчетов
+с интервалом 60 секунд. Retained-команда восстанавливает отчеты при
+переподключении монитора. Prometheus опрашивает сборщик каждые 15 секунд;
+свежесть показаний считается по времени приема MQTT, так как часы датчика
+могут быть не синхронизированы.
+
+Дашборд: `http://192.168.1.2:3000/d/qingping-air` или
+`https://grafana.killeik.net/d/qingping-air`. Используется обычный вход Grafana.
+Макет хранится в `dashboards/qingping.json`, период по умолчанию - сутки.
+
 ## Обновление DNS-записи Cloudflare
 
 ```shell

@@ -9,6 +9,7 @@
     ./monitoring.nix
     ./selfhost.nix
     ./codex.nix
+    ./qingping.nix
   ];
 
   boot.loader.systemd-boot.enable = true;
@@ -32,6 +33,10 @@
         users.qingping = {
           passwordFile = "/var/lib/qingping/mqtt-password";
           acl = [ "readwrite qingping/ccb5d1327498/#" ];
+        };
+        users.qingping-metrics = {
+          passwordFile = "/var/lib/qingping/metrics-password";
+          acl = [ "read qingping/ccb5d1327498/up" ];
         };
       }
     ];
