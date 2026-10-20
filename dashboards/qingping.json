@@ -19,7 +19,7 @@
     {
       "id": 1,
       "type": "stat",
-      "title": "CO2",
+      "title": "Текущие показания",
       "datasource": {
         "type": "prometheus",
         "uid": "PBFA97CFB590B2093"
@@ -27,249 +27,160 @@
       "gridPos": {
         "x": 0,
         "y": 0,
-        "w": 4,
-        "h": 4
+        "w": 24,
+        "h": 5
       },
       "targets": [
         {
           "refId": "A",
           "expr": "qingping_co2_ppm{job=\"qingping\"}",
+          "legendFormat": "CO2",
           "instant": true,
           "range": false
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ppm",
-          "decimals": 0,
-          "noValue": "Нет данных"
         },
-        "overrides": []
-      },
-      "options": {
-        "colorMode": "none",
-        "graphMode": "none",
-        "textMode": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "values": false
-        },
-        "justifyMode": "center",
-        "orientation": "auto"
-      }
-    },
-    {
-      "id": 2,
-      "type": "stat",
-      "title": "PM2.5",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "gridPos": {
-        "x": 4,
-        "y": 0,
-        "w": 4,
-        "h": 4
-      },
-      "targets": [
         {
-          "refId": "A",
+          "refId": "B",
           "expr": "qingping_pm25_micrograms_per_cubic_meter{job=\"qingping\"}",
+          "legendFormat": "PM2.5",
           "instant": true,
           "range": false
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "suffix:ug/m3",
-          "decimals": 0,
-          "noValue": "Нет данных"
         },
-        "overrides": []
-      },
-      "options": {
-        "colorMode": "none",
-        "graphMode": "none",
-        "textMode": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "values": false
-        },
-        "justifyMode": "center",
-        "orientation": "auto"
-      }
-    },
-    {
-      "id": 3,
-      "type": "stat",
-      "title": "PM10",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "gridPos": {
-        "x": 8,
-        "y": 0,
-        "w": 4,
-        "h": 4
-      },
-      "targets": [
         {
-          "refId": "A",
+          "refId": "C",
           "expr": "qingping_pm10_micrograms_per_cubic_meter{job=\"qingping\"}",
+          "legendFormat": "PM10",
           "instant": true,
           "range": false
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "suffix:ug/m3",
-          "decimals": 0,
-          "noValue": "Нет данных"
         },
-        "overrides": []
-      },
-      "options": {
-        "colorMode": "none",
-        "graphMode": "none",
-        "textMode": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "values": false
-        },
-        "justifyMode": "center",
-        "orientation": "auto"
-      }
-    },
-    {
-      "id": 4,
-      "type": "stat",
-      "title": "Температура",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "gridPos": {
-        "x": 12,
-        "y": 0,
-        "w": 4,
-        "h": 4
-      },
-      "targets": [
         {
-          "refId": "A",
+          "refId": "D",
           "expr": "qingping_temperature_celsius{job=\"qingping\"}",
+          "legendFormat": "Температура",
           "instant": true,
           "range": false
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "celsius",
-          "decimals": 1,
-          "noValue": "Нет данных"
         },
-        "overrides": []
-      },
-      "options": {
-        "colorMode": "none",
-        "graphMode": "none",
-        "textMode": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "values": false
-        },
-        "justifyMode": "center",
-        "orientation": "auto"
-      }
-    },
-    {
-      "id": 5,
-      "type": "stat",
-      "title": "Влажность",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "gridPos": {
-        "x": 16,
-        "y": 0,
-        "w": 4,
-        "h": 4
-      },
-      "targets": [
         {
-          "refId": "A",
+          "refId": "E",
           "expr": "qingping_humidity_percent{job=\"qingping\"}",
+          "legendFormat": "Влажность",
           "instant": true,
           "range": false
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "decimals": 1,
-          "noValue": "Нет данных"
         },
-        "overrides": []
-      },
-      "options": {
-        "colorMode": "none",
-        "graphMode": "none",
-        "textMode": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "values": false
-        },
-        "justifyMode": "center",
-        "orientation": "auto"
-      }
-    },
-    {
-      "id": 6,
-      "type": "stat",
-      "title": "Батарея",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "gridPos": {
-        "x": 20,
-        "y": 0,
-        "w": 4,
-        "h": 4
-      },
-      "targets": [
         {
-          "refId": "A",
+          "refId": "F",
           "expr": "qingping_battery_percent{job=\"qingping\"}",
+          "legendFormat": "Батарея",
           "instant": true,
           "range": false
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "percent",
-          "decimals": 0,
           "noValue": "Нет данных"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "A"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ppm"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "B"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "suffix:ug/m3"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "C"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "suffix:ug/m3"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "D"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "celsius"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "E"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "F"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          }
+        ]
       },
       "options": {
         "colorMode": "none",
         "graphMode": "none",
-        "textMode": "auto",
+        "textMode": "value_and_name",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -277,50 +188,8 @@
           "values": false
         },
         "justifyMode": "center",
-        "orientation": "auto"
-      }
-    },
-    {
-      "id": 7,
-      "type": "stat",
-      "title": "Время с последнего отчета",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "gridPos": {
-        "x": 0,
-        "y": 4,
-        "w": 24,
-        "h": 3
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "time() - timestamp(qingping_co2_ppm{job=\"qingping\"})",
-          "instant": true,
-          "range": false
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "s",
-          "decimals": 0,
-          "noValue": "Нет связи"
-        },
-        "overrides": []
-      },
-      "options": {
-        "colorMode": "none",
-        "graphMode": "none",
-        "textMode": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "values": false
-        },
-        "orientation": "horizontal"
+        "orientation": "auto",
+        "wideLayout": false
       }
     },
     {
@@ -333,7 +202,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 7,
+        "y": 5,
         "w": 12,
         "h": 8
       },
@@ -384,7 +253,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 7,
+        "y": 5,
         "w": 12,
         "h": 8
       },
@@ -442,7 +311,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 15,
+        "y": 13,
         "w": 24,
         "h": 8
       },
