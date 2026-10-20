@@ -13,7 +13,10 @@ let
     vendorHash = "sha256-ceQ3M9C/Bk+3WzKfk6t/OBNLV/4YbBvtb4vNIVW2Y/0=";
     subPackages = [ "cmd" ];
     env.CGO_ENABLED = 0;
-    ldflags = [ "-s" "-w" ];
+    ldflags = [
+      "-s"
+      "-w"
+    ];
     postInstall = ''
       mv $out/bin/cmd $out/bin/mqtt2prometheus
     '';
@@ -29,68 +32,115 @@ let
       qos = 1;
     };
     cache.timeout = "3m";
-    metrics = map (metric: {
-      prom_name = "qingping_${metric.name}";
-      mqtt_name = "sensorData.[0].${metric.field}.value";
-      help = metric.help;
-      type = "gauge";
-    }) [
-      { name = "co2_ppm"; field = "co2"; help = "Carbon dioxide concentration in ppm."; }
-      { name = "pm25_micrograms_per_cubic_meter"; field = "pm25"; help = "PM2.5 concentration in micrograms per cubic meter."; }
-      { name = "pm10_micrograms_per_cubic_meter"; field = "pm10"; help = "PM10 concentration in micrograms per cubic meter."; }
-      { name = "temperature_celsius"; field = "temperature"; help = "Air temperature in degrees Celsius."; }
-      { name = "humidity_percent"; field = "humidity"; help = "Relative humidity in percent."; }
-      { name = "battery_percent"; field = "battery"; help = "Battery charge in percent."; }
-    ];
+    metrics =
+      map
+        (metric: {
+          prom_name = "qingping_${metric.name}";
+          mqtt_name = "sensorData.[0].${metric.field}.value";
+          help = metric.help;
+          type = "gauge";
+        })
+        [
+          {
+            name = "co2_ppm";
+            field = "co2";
+            help = "Carbon dioxide concentration in ppm.";
+          }
+          {
+            name = "pm25_micrograms_per_cubic_meter";
+            field = "pm25";
+            help = "PM2.5 concentration in micrograms per cubic meter.";
+          }
+          {
+            name = "pm10_micrograms_per_cubic_meter";
+            field = "pm10";
+            help = "PM10 concentration in micrograms per cubic meter.";
+          }
+          {
+            name = "temperature_celsius";
+            field = "temperature";
+            help = "Air temperature in degrees Celsius.";
+          }
+          {
+            name = "humidity_percent";
+            field = "humidity";
+            help = "Relative humidity in percent.";
+          }
+          {
+            name = "battery_percent";
+            field = "battery";
+            help = "Battery charge in percent.";
+          }
+        ];
   };
 
-  alertRule = { uid, title, metric, condition, duration, description, summary, panelId }: {
-    inherit uid title;
-    condition = "B";
-    for = duration;
-    noDataState = "OK";
-    execErrState = "Error";
-    annotations = {
-      inherit description summary;
-      __dashboardUid__ = "qingping-air";
-      __panelId__ = toString panelId;
-    };
-    notification_settings = {
-      receiver = "qingping-telegram";
-      group_wait = "30s";
-      group_interval = "5m";
-      repeat_interval = "4h";
-    };
-    data = [
-      {
-        refId = "A";
-        datasourceUid = "PBFA97CFB590B2093";
-        relativeTimeRange = { from = 180; to = 0; };
-        model = {
+  alertRule =
+    {
+      uid,
+      title,
+      metric,
+      condition,
+      duration,
+      description,
+      summary,
+      panelId,
+    }:
+    {
+      inherit uid title;
+      condition = "B";
+      for = duration;
+      noDataState = "OK";
+      execErrState = "Error";
+      annotations = {
+        inherit description summary;
+        __dashboardUid__ = "qingping-air";
+        __panelId__ = toString panelId;
+      };
+      notification_settings = {
+        receiver = "qingping-telegram";
+        group_wait = "30s";
+        group_interval = "5m";
+        repeat_interval = "4h";
+      };
+      data = [
+        {
           refId = "A";
-          expr = "${metric}{job=\"qingping\"}";
-          instant = true;
-          range = false;
-        };
-      }
-      {
-        refId = "B";
-        datasourceUid = "__expr__";
-        relativeTimeRange = { from = 0; to = 0; };
-        model = {
+          datasourceUid = "PBFA97CFB590B2093";
+          relativeTimeRange = {
+            from = 180;
+            to = 0;
+          };
+          model = {
+            refId = "A";
+            expr = "${metric}{job=\"qingping\"}";
+            instant = true;
+            range = false;
+          };
+        }
+        {
           refId = "B";
-          type = "math";
-          expression = condition;
-        };
-      }
-    ];
-  };
+          datasourceUid = "__expr__";
+          relativeTimeRange = {
+            from = 0;
+            to = 0;
+          };
+          model = {
+            refId = "B";
+            type = "math";
+            expression = condition;
+          };
+        }
+      ];
+    };
 in
 {
   systemd.services.qingping-exporter = {
     description = "Qingping MQTT to Prometheus exporter";
     wantedBy = [ "multi-user.target" ];
-    after = [ "network-online.target" "mosquitto.service" ];
+    after = [
+      "network-online.target"
+      "mosquitto.service"
+    ];
     wants = [ "network-online.target" ];
     environment.MQTT2PROM_MQTT_PASSWORD = "%d/mqtt-password";
     serviceConfig = {

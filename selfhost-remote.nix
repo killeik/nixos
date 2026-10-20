@@ -8,7 +8,10 @@
     content = {
       type = "gpt";
       partitions = {
-        boot = { size = "1M"; type = "EF02"; };
+        boot = {
+          size = "1M";
+          type = "EF02";
+        };
         swap = {
           size = "1G";
           content.type = "swap";
@@ -25,7 +28,10 @@
     };
   };
   boot.loader.grub.enable = true;
-  boot.kernelParams = [ "console=tty0" "console=ttyS0,115200n8" ];
+  boot.kernelParams = [
+    "console=tty0"
+    "console=ttyS0,115200n8"
+  ];
 
   networking.hostName = "selfhost-remote";
   networking.useDHCP = false;
@@ -44,7 +50,10 @@
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBT5yrcVE1NHFJS9qnwx+01s47mEQ+RE3IQ8dlLefkI3"
   ];
 
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
   nix.gc = {
     automatic = true;
     dates = "weekly";
