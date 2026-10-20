@@ -8,57 +8,65 @@
     privateNetwork = true;
     hostAddress = "10.231.40.1";
     localAddress = "10.231.40.2";
-    config = { pkgs, ... }: let
-      t3codeNightly = pkgs.callPackage ./t3code-nightly.nix { };
-    in {
-      system.stateVersion = "25.11";
-      networking.hostName = "codex";
-      environment.etc."machine-info".text = ''
-        PRETTY_HOSTNAME="oggy"
-      '';
-      networking.useHostResolvConf = false;
-      networking.nameservers = [ "192.168.1.1" ];
-      networking.enableIPv6 = false;
-      services.openssh = {
-        enable = true;
-        settings = {
-          PasswordAuthentication = false;
-          KbdInteractiveAuthentication = false;
-          PermitRootLogin = "no";
+    config =
+      { pkgs, ... }:
+      {
+        system.stateVersion = "25.11";
+        networking.hostName = "codex";
+        environment.etc."machine-info".text = ''
+          PRETTY_HOSTNAME="oggy"
+        '';
+        networking.useHostResolvConf = false;
+        networking.nameservers = [ "192.168.1.1" ];
+        networking.enableIPv6 = false;
+        services.openssh = {
+          enable = true;
+          settings = {
+            PasswordAuthentication = false;
+            KbdInteractiveAuthentication = false;
+            PermitRootLogin = "no";
+          };
         };
-      };
-      users.users.codex = {
-        isNormalUser = true;
-        uid = 1000;
-        openssh.authorizedKeys.keys = config.users.users.killeik.openssh.authorizedKeys.keys;
-      };
-      environment.systemPackages = with pkgs; [
-        t3codeNightly git ripgrep tmux curl jq nodejs python3 uv gcc gnumake pkg-config
-      ];
-      programs.nix-ld.enable = true;
-      environment.localBinInPath = true;
-      systemd.services.t3 = {
-        description = "T3 Code web interface";
-        wantedBy = [ "multi-user.target" ];
-        after = [ "network-online.target" ];
-        wants = [ "network-online.target" ];
-        environment = {
-          HOME = "/home/codex";
-          PATH = pkgs.lib.mkForce "/home/codex/.local/bin:${pkgs.lib.makeBinPath (with pkgs; [ git ripgrep nodejs bash coreutils openssh ])}";
+        users.users.codex = {
+          isNormalUser = true;
+          uid = 1000;
+          linger = true;
+          openssh.authorizedKeys.keys = config.users.users.killeik.openssh.authorizedKeys.keys;
         };
-        serviceConfig = {
-          User = "codex";
-          WorkingDirectory = "/home/codex";
-          ExecStart = "${t3codeNightly}/bin/t3 serve --host 0.0.0.0 --port 3773";
-          Restart = "on-failure";
-          RestartSec = 10;
-          UMask = "0077";
+        environment.systemPackages = with pkgs; [
+          git
+          ripgrep
+          tmux
+          curl
+          jq
+          nodejs
+          python3
+          uv
+          gcc
+          gnumake
+          pkg-config
+        ];
+        programs.nix-ld.enable = true;
+        environment.localBinInPath = true;
+        # The official CLI owns the user unit and runtime so its updater can switch versions.
+        systemd.user.services.t3code = {
+          overrideStrategy = "asDropin";
+          serviceConfig = {
+            Environment = [
+              "PATH=/home/codex/.local/bin:/run/current-system/sw/bin"
+              "T3CODE_HOST=0.0.0.0"
+              "T3CODE_PORT=3773"
+            ];
+            UMask = "0077";
+          };
         };
+        networking.firewall.allowedTCPPorts = [ 3773 ];
+        nix.settings.experimental-features = [
+          "nix-command"
+          "flakes"
+        ];
+        services.journald.settings.Journal.SystemMaxUse = "256M";
       };
-      networking.firewall.allowedTCPPorts = [ 3773 ];
-      nix.settings.experimental-features = [ "nix-command" "flakes" ];
-      services.journald.settings.Journal.SystemMaxUse = "256M";
-    };
   };
 
   systemd.services."container@codex".serviceConfig = {
