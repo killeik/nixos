@@ -136,7 +136,7 @@ Excalidash <code>1001:1001</code>; Forgejo явно получает <code>USER_
 <code>miniflux.dump</code>, <code>forgejo.db</code>, <code>grafana.db</code>; это локальные точки перед
 обновлением. Само наличие файла не доказывает полный restore. Теперь настроены
 ежедневные snapshots и согласованные копии основных БД: см.
-<a href="https://github.com/killeik/nixos/blob/agent/oggy-maintenance-review/docs/backups.md">backups.md</a>. Пути <code>/var/lib/btrbk/snapshots</code> и <code>/var/lib/oggy-database-backups</code> проверены.
+<a href="https://github.com/killeik/nixos/blob/agent/oggy-maintenance-followup/docs/backups.md">backups.md</a>. Пути <code>/var/lib/btrbk/snapshots</code> и <code>/var/lib/oggy-database-backups</code> проверены.
 Legacy-наборы удалены после проверки нового снимка и тестового восстановления PostgreSQL.</p>
 <p>Для PostgreSQL нужен проверенный pg_dump/pg_restore, для живого SQLite -
 Backup API или остановленное приложение, а не произвольный cp одного .db.
@@ -521,7 +521,7 @@ user service, Nix отвечает за nix-ld/зависимости/drop-in/li
 <code>t3code-nightly.nix</code> удаляется. Поэтому предлагать автоматизацию обновления
 его version/hash или сохранение patchelf override теперь неактуально.
 См. точные исходники installer/update и границу live-проверки в
-<a href="https://github.com/killeik/nixos/blob/agent/oggy-maintenance-review/docs/t3-runtime.md">t3-runtime.md</a>. Handoff выполнен: работает native user service, endpoint сообщает
+<a href="https://github.com/killeik/nixos/blob/agent/oggy-maintenance-followup/docs/t3-runtime.md">t3-runtime.md</a>. Handoff выполнен: работает native user service, endpoint сообщает
 <code>serverSelfUpdate=boot-service</code>; ID окружения и Codex login сохранены.</p>
 <p>Компромисс нового пути: T3 может обновляться штатным updater без Nix rebuild,
 но <code>nixos-rebuild --rollback</code> больше не выбирает runtime из home. Нужны
