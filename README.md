@@ -19,6 +19,16 @@ nix run nixpkgs#nixos-rebuild -- switch --flake .#oggy --target-host oggy.home.a
 `pull = "always"` обновляет образ при старте контейнера. Если при выкладке
 контейнер не перезапустился, обновить его через соответствующий `docker-*.service`.
 
+Codex CLI в контейнере `codex` установлен пользователем через npm в
+`/home/codex/.local`, вне Nix. Обновлять его можно в T3 через
+`Settings -> Providers -> Update now`; текущий CLI-логин и история сохраняются.
+Первичная установка от пользователя `codex`:
+
+```shell
+npm config set prefix "$HOME/.local"
+npm install --global @openai/codex@latest
+```
+
 ## Конфиги и секреты
 
 Перед первой выкладкой разделить старый `.env` на файлы в
@@ -64,6 +74,16 @@ CGDN1 подключен к `Smetankovy` по WPA2 и к Mosquitto на `192.168
 Дашборд: `http://192.168.1.2:3000/d/qingping-air` или
 `https://grafana.killeik.net/d/qingping-air`. Используется обычный вход Grafana.
 Макет хранится в `dashboards/qingping.json`, период по умолчанию - сутки.
+
+Алерты Grafana описаны в `qingping.nix`: CO2 выше 1500 ppm в течение 10 минут,
+влажность ниже 30% или выше 60% в течение 30 минут. Проверка раз в минуту,
+уведомления идут в Telegram при срабатывании и завершении, повтор - через 4 часа.
+Отсутствие данных не вызывает эти алерты.
+
+Telegram-настройки хранятся на oggy в `/var/lib/qingping/telegram.env`
+(`root:root`, `0600`): `QINGPING_TELEGRAM_TOKEN` и `QINGPING_TELEGRAM_CHAT_ID`.
+Grafana получает их через systemd `EnvironmentFile`; значения не добавлять
+в Nix-конфигурацию или Git. После изменения файла перезапустить Grafana.
 
 ## Обновление DNS-записи Cloudflare
 

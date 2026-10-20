@@ -35,6 +35,9 @@
     fi
   '';
 
+  # Caddy bind-mounts this directory, so its inode must survive service stops.
+  systemd.services.grafana.serviceConfig.RuntimeDirectoryPreserve = "yes";
+
   services.prometheus = {
     enable = true;
     listenAddress = "127.0.0.1";
