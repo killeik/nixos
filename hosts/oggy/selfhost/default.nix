@@ -1,4 +1,10 @@
-{ pkgs, oggy, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  oggy,
+  ...
+}:
 
 let
   selfhostDir = "/home/killeik/selfhost";
@@ -29,11 +35,13 @@ in
     install -d -m 0755 -o 1001 -g 1001 ${selfhostDir}/excalidash
     install -d -m 0755 -o 1001 -g 1001 ${selfhostDir}/excalidash/backups
     install -d -m 0755 -o 1001 -g 1001 ${selfhostDir}/excalidash/prisma
-    if [ ! -e ${selfhostDir}/excalidash/backend.env ]; then
-      install -m 0600 -o root -g root /dev/null ${selfhostDir}/excalidash/backend.env
-      printf 'API_KEY_HASH_PEPPER=%s\n' "$(${pkgs.openssl}/bin/openssl rand -hex 32)" \
-        > ${selfhostDir}/excalidash/backend.env
-    fi
+    ${lib.optionalString (!config.oggy.sops.enable) ''
+      if [ ! -e ${selfhostDir}/excalidash/backend.env ]; then
+        install -m 0600 -o root -g root /dev/null ${selfhostDir}/excalidash/backend.env
+        printf 'API_KEY_HASH_PEPPER=%s\n' "$(${pkgs.openssl}/bin/openssl rand -hex 32)" \
+          > ${selfhostDir}/excalidash/backend.env
+      fi
+    ''}
     install -d -m 0755 -o killeik -g users ${selfhostDir}/lidarr/config
     install -d -m 0755 -o killeik -g users ${selfhostDir}/music
     # docker.io/postgres:18 uses postgres 999:999 for its bind-mounted data.

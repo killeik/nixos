@@ -83,6 +83,9 @@ Runtime state по-прежнему находится на сервере в `/
 
 ## Конфиги и секреты
 
+Подготовлен выключенный по умолчанию sops-nix. Bootstrap, миграция и
+восстановление: [docs/secrets.md](docs/secrets.md).
+
 Рабочие env-файлы находятся в `/home/killeik/selfhost` на oggy
 (`root:root`, `0600`, вне Git):
 
