@@ -7,6 +7,8 @@
 }:
 
 {
+  imports = [ ./grafana/host-alerts.nix ];
+
   virtualisation.oci-containers.containers.caddy.ports = [ "${oggy.lanAddress}:3000:3000" ];
   networking.firewall.allowedTCPPorts = [ 3000 ];
 
@@ -48,6 +50,14 @@
   # Caddy bind-mounts this directory, so its inode must survive service stops.
   systemd.services.grafana.serviceConfig.RuntimeDirectoryPreserve = "yes";
 
+  services.grafana.provision.dashboards.settings.providers = [
+    {
+      name = "home";
+      folder = "Home";
+      options.path = ./grafana/dashboards;
+    }
+  ];
+
   services.prometheus = {
     enable = true;
     listenAddress = "127.0.0.1";
@@ -60,10 +70,26 @@
 
     scrapeConfigs = [
       {
-        job_name = "oggy";
+        job_name = "node";
+        scrape_interval = "30s";
         static_configs = [
           {
             targets = [ "127.0.0.1:9100" ];
+            labels.host = "oggy";
+          }
+          {
+            targets = [ "sparky.home.arpa:9100" ];
+            labels.host = "sparky";
+          }
+        ];
+      }
+      {
+        job_name = "openwrt";
+        scrape_interval = "30s";
+        static_configs = [
+          {
+            targets = [ "192.168.1.1:9100" ];
+            labels.host = "openwrt";
           }
         ];
       }

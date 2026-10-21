@@ -104,6 +104,11 @@ Runtime state по-прежнему находится на сервере в `/
 
 `hosts/oggy/selfhost/soularr/config.ini` - начальный шаблон, рабочие настройки живут на сервере.
 
+## Мониторинг хостов
+
+Сбор метрик oggy, sparky и OpenWrt, стандартные dashboards и Telegram alerts:
+[docs/monitoring.md](docs/monitoring.md).
+
 ## Qingping Air Monitor Lite
 
 CGDN1 подключен к `Smetankovy` по WPA2 и к Mosquitto на `192.168.1.2:1883`.
