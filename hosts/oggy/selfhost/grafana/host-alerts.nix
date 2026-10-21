@@ -11,6 +11,7 @@ let
       description,
       summary,
       dashboard ? "node-exporter-full",
+      panelId,
       severity ? "warning",
     }:
     {
@@ -26,6 +27,7 @@ let
       annotations = {
         inherit description summary;
         __dashboardUid__ = dashboard;
+        __panelId__ = toString panelId;
       };
       notification_settings = {
         # Keep the existing contact point UID and credentials during this expansion.
@@ -104,6 +106,7 @@ in
         rules = map alertRule [
           {
             uid = "host-exporter-down";
+            panelId = 15;
             title = "Нет метрик хоста";
             # Sparky is allowed to sleep or be switched off without notifications.
             expr = ''up{job=~"node|openwrt",host!="sparky"}'';
@@ -115,6 +118,7 @@ in
           }
           {
             uid = "host-cpu-high";
+            panelId = 20;
             title = "Долго занят процессор";
             expr = ''100 * (1 - avg by (host, instance) (rate(node_cpu_seconds_total{job="node",mode="idle"}[5m])))'';
             condition = "$A > 90";
@@ -124,6 +128,7 @@ in
           }
           {
             uid = "host-memory-high";
+            panelId = 16;
             title = "Мало свободной памяти";
             expr = ''100 * (1 - node_memory_MemAvailable_bytes{job="node"} / node_memory_MemTotal_bytes{job="node"})'';
             condition = "$A > 90";
@@ -133,6 +138,7 @@ in
           }
           {
             uid = "host-disk-low";
+            panelId = 154;
             title = "Заканчивается место";
             expr = ''(100 * node_filesystem_avail_bytes{job="node",fstype!~"tmpfs|devtmpfs|overlay|squashfs|ramfs",mountpoint!~"/(run|var/lib/(docker|containers|nixos-containers))(/.*)?"} / node_filesystem_size_bytes{job="node"}) and on (instance, device, mountpoint) (node_filesystem_readonly{job="node"} == 0)'';
             condition = "$A < 10";
@@ -142,6 +148,7 @@ in
           }
           {
             uid = "host-systemd-failed";
+            panelId = 15;
             title = "Ошибка системной службы";
             expr = ''node_systemd_unit_state{job="node",state="failed"} == 1'';
             condition = "$A > 0";
@@ -151,6 +158,7 @@ in
           }
           {
             uid = "router-cpu-high";
+            panelId = 20;
             title = "Долго занят процессор роутера";
             expr = ''100 * (1 - avg by (host, instance) (rate(node_cpu_seconds_total{job="openwrt",mode="idle"}[5m])))'';
             condition = "$A > 90";
@@ -161,6 +169,7 @@ in
           }
           {
             uid = "router-memory-high";
+            panelId = 16;
             title = "Мало памяти на роутере";
             expr = ''100 * (1 - node_memory_MemAvailable_bytes{job="openwrt"} / node_memory_MemTotal_bytes{job="openwrt"})'';
             condition = "$A > 90";
@@ -171,6 +180,7 @@ in
           }
           {
             uid = "router-disk-low";
+            panelId = 154;
             title = "Заканчивается место на роутере";
             expr = ''100 * node_filesystem_avail_bytes{job="openwrt",mountpoint="/overlay"} / node_filesystem_size_bytes{job="openwrt",mountpoint="/overlay"}'';
             condition = "$A < 10";
@@ -181,6 +191,7 @@ in
           }
           {
             uid = "router-conntrack-high";
+            panelId = 15;
             title = "Заполняется таблица соединений";
             expr = ''100 * node_nf_conntrack_entries{job="openwrt"} / node_nf_conntrack_entries_limit{job="openwrt"}'';
             condition = "$A > 80";
