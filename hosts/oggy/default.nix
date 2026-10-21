@@ -7,6 +7,7 @@
   imports = [
     ./hardware.nix
     ./selfhost
+    ./secrets.nix
   ];
 
   # Shared host parameters are module arguments, not separately imported values.

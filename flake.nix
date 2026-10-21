@@ -6,6 +6,10 @@
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
   };
 
@@ -14,6 +18,7 @@
       self,
       nixpkgs,
       disko,
+      sops-nix,
     }:
     {
       formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.nixfmt-tree;
@@ -26,7 +31,10 @@
       };
       nixosConfigurations.oggy = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
-        modules = [ ./hosts/oggy ];
+        modules = [
+          sops-nix.nixosModules.sops
+          ./hosts/oggy
+        ];
       };
     };
 }
