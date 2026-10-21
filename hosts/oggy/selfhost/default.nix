@@ -1,15 +1,25 @@
-{ pkgs, oggy, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  oggy,
+  ...
+}:
 
 let
   selfhostDir = "/home/killeik/selfhost";
   slskdContainerIp = oggy.slskdAddress;
 
+  selfhostContainerServices = lib.mapAttrsToList (_: container: "${container.serviceName}.service") (
+    lib.filterAttrs (
+      _: container: builtins.elem "selfhost" container.networks
+    ) config.virtualisation.oci-containers.containers
+  );
+
   # PUID/PGID and user 1000:100 below match oggy killeik:users on shared media.
   commonContainerOptions = {
     pull = "always";
-    extraOptions = [
-      "--network=selfhost"
-    ];
+    networks = [ "selfhost" ];
   };
 in
 {
@@ -63,17 +73,24 @@ in
   systemd.services.docker-caddy.after = [ "grafana.service" ];
   systemd.services.docker-network-selfhost = {
     wantedBy = [ "multi-user.target" ];
-    requiredBy = [ "docker-caddy.service" ];
-    before = [ "docker-caddy.service" ];
+    requiredBy = selfhostContainerServices;
+    before = selfhostContainerServices;
     after = [ "docker.service" ];
     requires = [ "docker.service" ];
-    path = [ pkgs.docker ];
+    partOf = [ "docker.service" ];
+    path = [ config.virtualisation.docker.package ];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
     };
     script = ''
       docker network inspect selfhost >/dev/null 2>&1 || docker network create --subnet=${oggy.dockerSubnet} selfhost
+      # Never recreate an existing network: running containers may still use it.
+      subnet=$(docker network inspect --format '{{range .IPAM.Config}}{{println .Subnet}}{{end}}' selfhost)
+      if [ "$subnet" != "${oggy.dockerSubnet}" ]; then
+        echo "selfhost network subnet is $subnet; expected ${oggy.dockerSubnet}. Refusing to recreate it." >&2
+        exit 1
+      fi
     '';
   };
 
@@ -361,7 +378,7 @@ in
         ports = [
           "50300:50300/tcp"
         ];
-        extraOptions = commonContainerOptions.extraOptions ++ [
+        extraOptions = [
           "--ip=${slskdContainerIp}"
           "--ulimit=nofile=2048:2048"
         ];
