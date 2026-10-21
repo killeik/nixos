@@ -87,24 +87,38 @@
     externalInterface = oggy.externalInterface;
     internalInterfaces = [ "ve-codex" ];
   };
-  # Host access is blocked by the host firewall. Restrict forwarded traffic too.
-  networking.firewall.extraCommands = ''
-    iptables -N CODEX-EGRESS 2>/dev/null || true
-    iptables -F CODEX-EGRESS
-    iptables -A CODEX-EGRESS -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-    iptables -A CODEX-EGRESS -d ${oggy.dnsAddress} -p udp --dport 53 -j ACCEPT
-    iptables -A CODEX-EGRESS -d ${oggy.dnsAddress} -p tcp --dport 53 -j ACCEPT
-    for subnet in 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 169.254.0.0/16; do
-      iptables -A CODEX-EGRESS -d "$subnet" -j REJECT
-    done
-    iptables -A CODEX-EGRESS -j ACCEPT
-    iptables -C FORWARD -i ve-codex -j CODEX-EGRESS 2>/dev/null || iptables -I FORWARD 1 -i ve-codex -j CODEX-EGRESS
-    iptables -C INPUT -i ve-codex -m conntrack --ctstate NEW -j REJECT 2>/dev/null || iptables -I INPUT 1 -i ve-codex -m conntrack --ctstate NEW -j REJECT
-  '';
-  networking.firewall.extraStopCommands = ''
-    iptables -D FORWARD -i ve-codex -j CODEX-EGRESS 2>/dev/null || true
-    iptables -D INPUT -i ve-codex -m conntrack --ctstate NEW -j REJECT 2>/dev/null || true
-    iptables -F CODEX-EGRESS 2>/dev/null || true
-    iptables -X CODEX-EGRESS 2>/dev/null || true
-  '';
+  # Run before the NixOS and Docker filter chains, after conntrack and DNAT.
+  networking.nftables.tables.codex-guard = {
+    family = "inet";
+    content = ''
+      set private4 {
+        type ipv4_addr
+        flags interval
+        elements = { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.0.0/16 }
+      }
+      chain input {
+        type filter hook input priority filter - 10; policy accept;
+        iifname "ve-codex" ct state { established, related } accept
+        iifname "ve-codex" reject with icmpx type admin-prohibited
+      }
+      chain forward {
+        type filter hook forward priority filter - 10; policy accept;
+        iifname "ve-codex" jump egress
+      }
+      chain egress {
+        ct state invalid drop
+        meta nfproto ipv6 reject with icmpx type admin-prohibited
+        ip saddr != ${config.containers.codex.localAddress} reject
+        ct state { established, related } accept
+        ip daddr ${oggy.dnsAddress} udp dport 53 accept
+        ip daddr ${oggy.dnsAddress} tcp dport 53 accept
+        ip daddr @private4 reject with icmpx type admin-prohibited
+        accept
+      }
+    '';
+  };
+  systemd.services."container@codex" = {
+    after = [ "nftables.service" ];
+    requires = [ "nftables.service" ];
+  };
 }

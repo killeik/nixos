@@ -96,44 +96,21 @@ in
     '';
   };
 
-  systemd.services.slskd-conntrack-guard = {
-    description = "Limit outgoing Slskd connection bursts";
-    after = [
-      "docker.service"
-      "docker-network-selfhost.service"
-    ];
-    requires = [
-      "docker.service"
-      "docker-network-selfhost.service"
-    ];
-    partOf = [ "docker.service" ];
-    before = [ "docker-slskd.service" ];
-    requiredBy = [ "docker-slskd.service" ];
-    wantedBy = [ "multi-user.target" ];
-    path = [ pkgs.iptables ];
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-    };
-    script = ''
-      iptables -N SLSKD-GUARD 2>/dev/null || true
-      iptables -F SLSKD-GUARD
-      iptables -C DOCKER-USER -s ${slskdContainerIp}/32 -j SLSKD-GUARD 2>/dev/null \
-        || iptables -I DOCKER-USER 1 -s ${slskdContainerIp}/32 -j SLSKD-GUARD
-
-      iptables -A SLSKD-GUARD -p tcp --syn -m conntrack --ctstate NEW \
-        -m connlimit --connlimit-above 256 --connlimit-mask 32 \
-        -j REJECT --reject-with tcp-reset
-      iptables -A SLSKD-GUARD -p tcp --syn -m conntrack --ctstate NEW \
-        -m hashlimit --hashlimit-above 8/second --hashlimit-burst 25 \
-        --hashlimit-mode srcip --hashlimit-srcmask 32 --hashlimit-name slskd-new-v2 \
-        -j REJECT --reject-with tcp-reset
-      iptables -A SLSKD-GUARD -j RETURN
-    '';
-    preStop = ''
-      iptables -D DOCKER-USER -s ${slskdContainerIp}/32 -j SLSKD-GUARD 2>/dev/null || true
-      iptables -F SLSKD-GUARD 2>/dev/null || true
-      iptables -X SLSKD-GUARD 2>/dev/null || true
+  networking.nftables.tables.slskd-guard = {
+    family = "ip";
+    content = ''
+      set connections {
+        type ipv4_addr
+        flags dynamic
+      }
+      chain forward {
+        type filter hook forward priority filter - 10; policy accept;
+        ip saddr ${slskdContainerIp} ct state new tcp flags & (fin | syn | rst | ack) == syn jump new-connection
+      }
+      chain new-connection {
+        add @connections { ip saddr ct count over 256 } reject with tcp reset
+        limit rate over 8/second burst 25 packets reject with tcp reset
+      }
     '';
   };
 
