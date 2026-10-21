@@ -34,7 +34,29 @@
 
   time.timeZone = "Europe/Moscow";
 
-  virtualisation.docker.enable = true;
+  networking.nftables = {
+    enable = true;
+    # Docker owns its iptables-nft tables; reload only our declarative tables.
+    flushRuleset = false;
+  };
+  networking.firewall = {
+    filterForward = true;
+    extraForwardRules = ''
+      iifname { "docker0", "br-*" } accept
+    '';
+  };
+  virtualisation.docker = {
+    enable = true;
+    # Keep the stable backend. The NixOS nftables firewall owns the forward policy.
+    daemon.settings = {
+      firewall-backend = "iptables";
+      ip-forward-no-drop = true;
+    };
+  };
+  systemd.services.docker = {
+    after = [ "nftables.service" ];
+    requires = [ "nftables.service" ];
+  };
 
   security.sudo.wheelNeedsPassword = false;
 
