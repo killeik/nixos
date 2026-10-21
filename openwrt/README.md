@@ -33,7 +33,7 @@ cat /proc/sys/net/netfilter/nf_conntrack_tcp_timeout_time_wait
 
 ## oggy
 
-The declarative guard in `selfhost.nix` applies only to the static Slskd
+The declarative guard in `hosts/oggy/selfhost/default.nix` applies only to the static Slskd
 container address `172.19.255.254`:
 
 - at most 8 new TCP connections per second, with an initial burst of 25;
@@ -51,7 +51,7 @@ sudo iptables -L SLSKD-GUARD -n -v
 
 ## Rollback
 
-On oggy, revert the guard values in `selfhost.nix` to 25 connections per
+On oggy, revert the guard values in `hosts/oggy/selfhost/default.nix` to 25 connections per
 second, burst 100, and connlimit 512, then deploy the previous NixOS
 configuration.
 

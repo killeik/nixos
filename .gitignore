@@ -1,8 +1,4 @@
-selfhost/*
-!selfhost/.env.example
-!selfhost/caddy/
-selfhost/caddy/*
-!selfhost/caddy/Caddyfile
-!selfhost/soularr/
-selfhost/soularr/*
-!selfhost/soularr/config.ini
+# Legacy checkout-local service state must never enter Git.
+/selfhost/
+/result
+/result-*

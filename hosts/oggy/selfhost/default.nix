@@ -1,31 +1,54 @@
-{ pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  oggy,
+  ...
+}:
 
 let
   selfhostDir = "/home/killeik/selfhost";
-  slskdContainerIp = "172.19.255.254";
+  slskdContainerIp = oggy.slskdAddress;
 
+  selfhostContainerServices = lib.mapAttrsToList (_: container: "${container.serviceName}.service") (
+    lib.filterAttrs (
+      _: container: builtins.elem "selfhost" container.networks
+    ) config.virtualisation.oci-containers.containers
+  );
+
+  # PUID/PGID and user 1000:100 below match oggy killeik:users on shared media.
   commonContainerOptions = {
     pull = "always";
-    extraOptions = [
-      "--network=selfhost"
-    ];
+    networks = [ "selfhost" ];
   };
 in
 {
+  imports = [
+    ./monitoring.nix
+    ./smarthome.nix
+    ./codex.nix
+    ./backups.nix
+  ];
+
   system.activationScripts.selfhost-files = ''
     install -d -m 0755 -o killeik -g users ${selfhostDir}
     install -d -m 0755 -o killeik -g users ${selfhostDir}/caddy
     install -d -m 0755 -o killeik -g users ${selfhostDir}/downloads
+    # Excalidash backend runs as nodejs UID 1001 (primary GID 65533).
+    # Owner access is required; retain the existing on-disk GID 1001.
     install -d -m 0755 -o 1001 -g 1001 ${selfhostDir}/excalidash
     install -d -m 0755 -o 1001 -g 1001 ${selfhostDir}/excalidash/backups
     install -d -m 0755 -o 1001 -g 1001 ${selfhostDir}/excalidash/prisma
-    if [ ! -e ${selfhostDir}/excalidash/backend.env ]; then
-      install -m 0600 -o root -g root /dev/null ${selfhostDir}/excalidash/backend.env
-      printf 'API_KEY_HASH_PEPPER=%s\n' "$(${pkgs.openssl}/bin/openssl rand -hex 32)" \
-        > ${selfhostDir}/excalidash/backend.env
-    fi
+    ${lib.optionalString (!config.oggy.sops.enable) ''
+      if [ ! -e ${selfhostDir}/excalidash/backend.env ]; then
+        install -m 0600 -o root -g root /dev/null ${selfhostDir}/excalidash/backend.env
+        printf 'API_KEY_HASH_PEPPER=%s\n' "$(${pkgs.openssl}/bin/openssl rand -hex 32)" \
+          > ${selfhostDir}/excalidash/backend.env
+      fi
+    ''}
     install -d -m 0755 -o killeik -g users ${selfhostDir}/lidarr/config
     install -d -m 0755 -o killeik -g users ${selfhostDir}/music
+    # docker.io/postgres:18 uses postgres 999:999 for its bind-mounted data.
     install -d -m 0700 -o 999 -g 999 ${selfhostDir}/miniflux-postgres
     install -d -m 0755 -o killeik -g users ${selfhostDir}/navidrome/data
     install -d -m 0755 -o killeik -g users ${selfhostDir}/prowlarr/config
@@ -34,8 +57,9 @@ in
     install -d -m 0755 -o killeik -g users ${selfhostDir}/soularr
     # Bootstrap template only; subsequent settings are managed in the running instance.
     if [ ! -e ${selfhostDir}/soularr/config.ini ]; then
-      install -m 0644 -o killeik -g users ${./selfhost/soularr/config.ini} ${selfhostDir}/soularr/config.ini
+      install -m 0644 -o killeik -g users ${./soularr/config.ini} ${selfhostDir}/soularr/config.ini
     fi
+    # ghcr.io/usetrmnl/larapaper uses www-data 82:82 for SQLite and images.
     install -d -m 0755 -o 82 -g 82 ${selfhostDir}/larapaper/database
     install -d -m 0755 -o 82 -g 82 ${selfhostDir}/larapaper/generated-images
     if [ ! -e ${selfhostDir}/larapaper/database/database.sqlite ]; then
@@ -44,65 +68,49 @@ in
       chown 82:82 ${selfhostDir}/larapaper/database/database.sqlite
       chmod 0644 ${selfhostDir}/larapaper/database/database.sqlite
     fi
-    install -m 0644 -o killeik -g users ${./selfhost/caddy/Caddyfile} ${selfhostDir}/caddy/Caddyfile
+    install -m 0644 -o killeik -g users ${./caddy/Caddyfile} ${selfhostDir}/caddy/Caddyfile
   '';
 
-  systemd.services.docker-caddy.restartTriggers = [ ./selfhost/caddy/Caddyfile ];
+  systemd.services.docker-caddy.restartTriggers = [ ./caddy/Caddyfile ];
   systemd.services.docker-caddy.after = [ "grafana.service" ];
   systemd.services.docker-network-selfhost = {
     wantedBy = [ "multi-user.target" ];
-    requiredBy = [ "docker-caddy.service" ];
-    before = [ "docker-caddy.service" ];
+    requiredBy = selfhostContainerServices;
+    before = selfhostContainerServices;
     after = [ "docker.service" ];
     requires = [ "docker.service" ];
-    path = [ pkgs.docker ];
+    partOf = [ "docker.service" ];
+    path = [ config.virtualisation.docker.package ];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
     };
     script = ''
-      docker network inspect selfhost >/dev/null 2>&1 || docker network create --subnet=172.19.0.0/16 selfhost
+      docker network inspect selfhost >/dev/null 2>&1 || docker network create --subnet=${oggy.dockerSubnet} selfhost
+      # Never recreate an existing network: running containers may still use it.
+      subnet=$(docker network inspect --format '{{range .IPAM.Config}}{{println .Subnet}}{{end}}' selfhost)
+      if [ "$subnet" != "${oggy.dockerSubnet}" ]; then
+        echo "selfhost network subnet is $subnet; expected ${oggy.dockerSubnet}. Refusing to recreate it." >&2
+        exit 1
+      fi
     '';
   };
 
-  systemd.services.slskd-conntrack-guard = {
-    description = "Limit outgoing Slskd connection bursts";
-    after = [
-      "docker.service"
-      "docker-network-selfhost.service"
-    ];
-    requires = [
-      "docker.service"
-      "docker-network-selfhost.service"
-    ];
-    partOf = [ "docker.service" ];
-    before = [ "docker-slskd.service" ];
-    requiredBy = [ "docker-slskd.service" ];
-    wantedBy = [ "multi-user.target" ];
-    path = [ pkgs.iptables ];
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-    };
-    script = ''
-      iptables -N SLSKD-GUARD 2>/dev/null || true
-      iptables -F SLSKD-GUARD
-      iptables -C DOCKER-USER -s ${slskdContainerIp}/32 -j SLSKD-GUARD 2>/dev/null \
-        || iptables -I DOCKER-USER 1 -s ${slskdContainerIp}/32 -j SLSKD-GUARD
-
-      iptables -A SLSKD-GUARD -p tcp --syn -m conntrack --ctstate NEW \
-        -m connlimit --connlimit-above 256 --connlimit-mask 32 \
-        -j REJECT --reject-with tcp-reset
-      iptables -A SLSKD-GUARD -p tcp --syn -m conntrack --ctstate NEW \
-        -m hashlimit --hashlimit-above 8/second --hashlimit-burst 25 \
-        --hashlimit-mode srcip --hashlimit-srcmask 32 --hashlimit-name slskd-new-v2 \
-        -j REJECT --reject-with tcp-reset
-      iptables -A SLSKD-GUARD -j RETURN
-    '';
-    preStop = ''
-      iptables -D DOCKER-USER -s ${slskdContainerIp}/32 -j SLSKD-GUARD 2>/dev/null || true
-      iptables -F SLSKD-GUARD 2>/dev/null || true
-      iptables -X SLSKD-GUARD 2>/dev/null || true
+  networking.nftables.tables.slskd-guard = {
+    family = "ip";
+    content = ''
+      set connections {
+        type ipv4_addr
+        flags dynamic
+      }
+      chain forward {
+        type filter hook forward priority filter - 10; policy accept;
+        ip saddr ${slskdContainerIp} ct state new tcp flags & (fin | syn | rst | ack) == syn jump new-connection
+      }
+      chain new-connection {
+        add @connections { ip saddr ct count over 256 } reject with tcp reset
+        limit rate over 8/second burst 25 packets reject with tcp reset
+      }
     '';
   };
 
@@ -349,7 +357,7 @@ in
         ports = [
           "50300:50300/tcp"
         ];
-        extraOptions = commonContainerOptions.extraOptions ++ [
+        extraOptions = [
           "--ip=${slskdContainerIp}"
           "--ulimit=nofile=2048:2048"
         ];
