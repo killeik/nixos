@@ -236,7 +236,7 @@ in
             uid = "qingping-humidity-low";
             title = "Низкая влажность";
             metric = "qingping_humidity_percent";
-            condition = "$A < 30";
+            condition = "$A < 35";
             duration = "30m";
             description = "Низкая влажность.";
             summary = ''Влажность: {{ printf "%.0f" $values.A.Value }}%.'';
@@ -246,7 +246,7 @@ in
             uid = "qingping-humidity-high";
             title = "Высокая влажность";
             metric = "qingping_humidity_percent";
-            condition = "$A > 60";
+            condition = "$A > 55";
             duration = "30m";
             description = "Хозяин, сыровато. У нас тут кто-то прорастает.";
             summary = ''Влажность: {{ printf "%.0f" $values.A.Value }}%.'';
