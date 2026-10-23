@@ -214,43 +214,7 @@ in
     }
   ];
 
-  services.grafana.provision.dashboards.settings.providers = [
-    {
-      name = "qingping";
-      folder = "Home";
-      options.path = ./grafana/dashboards;
-    }
-  ];
-
-  systemd.services.grafana.serviceConfig.EnvironmentFile = "/var/lib/qingping/telegram.env";
-
   services.grafana.provision.alerting = {
-    contactPoints.settings.contactPoints = [
-      {
-        orgId = 1;
-        name = "qingping-telegram";
-        receivers = [
-          {
-            uid = "qingping-telegram";
-            type = "telegram";
-            disableResolveMessage = false;
-            settings = {
-              bottoken = "$QINGPING_TELEGRAM_TOKEN";
-              chatid = "$QINGPING_TELEGRAM_CHAT_ID";
-              parse_mode = "None";
-              disable_web_page_preview = true;
-              message = ''
-                {{ range .Alerts }}
-                {{ if eq .Status "firing" }}{{ .Annotations.description }}{{ else }}Все, молчу.{{ end }}
-                {{ .Annotations.summary }}
-                {{ .DashboardURL }}
-                {{ end }}
-              '';
-            };
-          }
-        ];
-      }
-    ];
     rules.settings.groups = [
       {
         orgId = 1;
@@ -272,7 +236,7 @@ in
             uid = "qingping-humidity-low";
             title = "Низкая влажность";
             metric = "qingping_humidity_percent";
-            condition = "$A < 30";
+            condition = "$A < 35";
             duration = "30m";
             description = "Низкая влажность.";
             summary = ''Влажность: {{ printf "%.0f" $values.A.Value }}%.'';
@@ -282,7 +246,7 @@ in
             uid = "qingping-humidity-high";
             title = "Высокая влажность";
             metric = "qingping_humidity_percent";
-            condition = "$A > 60";
+            condition = "$A > 55";
             duration = "30m";
             description = "Хозяин, сыровато. У нас тут кто-то прорастает.";
             summary = ''Влажность: {{ printf "%.0f" $values.A.Value }}%.'';

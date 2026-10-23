@@ -109,6 +109,11 @@ Self-hosted control server Tailscale, собственный DERP и подкл�
 
 `hosts/oggy/selfhost/soularr/config.ini` - начальный шаблон, рабочие настройки живут на сервере.
 
+## Мониторинг хостов
+
+Сбор метрик oggy, sparky и OpenWrt, стандартные dashboards и Telegram alerts:
+[docs/monitoring.md](docs/monitoring.md).
+
 ## Qingping Air Monitor Lite
 
 CGDN1 подключен к `Smetankovy` по WPA2 и к Mosquitto на `192.168.1.2:1883`.
@@ -139,7 +144,7 @@ CGDN1 подключен к `Smetankovy` по WPA2 и к Mosquitto на `192.168
 Макет хранится в `hosts/oggy/selfhost/grafana/dashboards/qingping.json`, период по умолчанию - сутки.
 
 Алерты Grafana описаны в `hosts/oggy/selfhost/smarthome.nix`: CO2 выше 1500 ppm в течение 10 минут,
-влажность ниже 30% или выше 60% в течение 30 минут. Проверка раз в минуту,
+влажность ниже 35% или выше 55% в течение 30 минут. Проверка раз в минуту,
 уведомления идут в Telegram при срабатывании и завершении, повтор - через 4 часа.
 Отсутствие данных не вызывает эти алерты.
 
