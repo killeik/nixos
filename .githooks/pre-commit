@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+nix fmt -- --ci
+exec nix flake check
