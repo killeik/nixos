@@ -1,48 +1,24 @@
-# OpenWrt conntrack tuning
+# OpenWrt
 
-Soularr can request directory contents from many Soulseek peers in a short
-period. Slskd turns those requests into direct TCP connection attempts. Peers
-that do not answer leave `SYN_SENT` entries in the OpenWrt conntrack table, so
-the router can exhaust its table even though Slskd has already timed out.
-
-OpenWrt keeps a 32K table, expires unanswered SYN attempts after 30 seconds,
-and keeps `TIME_WAIT` entries for 60 seconds. These general router settings
-remain after the music stack was removed from oggy.
-
-## OpenWrt
-
-Install the tracked sysctl file as:
+Установить [90-conntrack-tuning.conf](90-conntrack-tuning.conf)
+в `/etc/sysctl.d/90-conntrack-tuning.conf` на роутере, затем:
 
 ```sh
-cp 90-conntrack-tuning.conf /etc/sysctl.d/90-conntrack-tuning.conf
 chmod 0644 /etc/sysctl.d/90-conntrack-tuning.conf
 sysctl -p /etc/sysctl.d/90-conntrack-tuning.conf
 ```
 
-Verify:
+Проверить загрузку таблицы соединений:
 
 ```sh
-cat /proc/sys/net/netfilter/nf_conntrack_count
-cat /proc/sys/net/netfilter/nf_conntrack_max
-cat /proc/sys/net/netfilter/nf_conntrack_tcp_timeout_syn_sent
-cat /proc/sys/net/netfilter/nf_conntrack_tcp_timeout_time_wait
+sysctl net.netfilter.nf_conntrack_count net.netfilter.nf_conntrack_max
 ```
 
-## oggy
-
-The music stack and its dedicated connection guard have been removed from oggy.
-The general OpenWrt conntrack settings above remain in place.
-
-## Rollback
-
-On OpenWrt, keep the 32K capacity but restore the previous TCP timeouts by
-leaving only the `nf_conntrack_max` line in the sysctl file and applying:
+Откат таймаутов: удалить строки таймаутов из файла и применить прежние значения:
 
 ```sh
-sysctl -w net.netfilter.nf_conntrack_max=32768
 sysctl -w net.netfilter.nf_conntrack_tcp_timeout_syn_sent=120
 sysctl -w net.netfilter.nf_conntrack_tcp_timeout_time_wait=120
 ```
 
-Do not flush the conntrack table during rollback because that interrupts
-unrelated active connections.
+Не очищать conntrack: это прервет активные соединения.
