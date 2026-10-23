@@ -1,17 +1,29 @@
-{ oggy, ... }:
+{ pkgs, ... }:
 
 {
+  networking.wireguard.interfaces.ingress = {
+    ips = [ "10.76.0.2/32" ];
+    privateKeyFile = "/var/lib/wireguard/ingress.key";
+    peers = [
+      {
+        publicKey = "LOrveBGlyOuHjfHkZQxCNzBP645JgK3KkuwtlQdAHWM=";
+        allowedIPs = [ "10.76.0.1/32" ];
+        endpoint = "194.67.122.181:51871";
+        persistentKeepalive = 25;
+      }
+    ];
+  };
+
   services.headscale = {
     enable = true;
-    # Caddy runs in Docker and cannot reach a host loopback listener.
-    address = oggy.lanAddress;
+    address = "10.76.0.2";
     port = 8085;
     settings = {
       server_url = "https://headscale.killeik.net";
       # Prometheus already owns 127.0.0.1:9090.
       metrics_listen_addr = "127.0.0.1:9091";
       grpc_listen_addr = "127.0.0.1:50443";
-      trusted_proxies = [ oggy.dockerSubnet ];
+      trusted_proxies = [ "10.76.0.1/32" ];
       dns = {
         base_domain = "mesh.killeik.net";
         magic_dns = true;
@@ -21,24 +33,51 @@
       derp = {
         urls = [ ];
         auto_update_enabled = false;
-        server = {
-          enabled = true;
-          region_id = 999;
-          region_code = "oggy";
-          region_name = "Oggy";
-          verify_clients = true;
-          automatically_add_embedded_derp_region = true;
-          stun_listen_addr = "0.0.0.0:3478";
-        };
+        server.enabled = false;
+        paths = [
+          (pkgs.writeText "selfhost-derp.yaml" ''
+            regions:
+              999:
+                regionid: 999
+                regioncode: selfhost
+                regionname: Selfhost
+                nodes:
+                  - name: selfhost
+                    regionid: 999
+                    hostname: derp.killeik.net
+                    ipv4: 194.67.122.181
+                    ipv6: none
+                    stunport: 3478
+                    derpport: 443
+                    canport80: true
+          '')
+        ];
       };
     };
   };
 
-  # Keep the unencrypted backend private to the existing Docker reverse proxy.
-  networking.firewall.extraInputRules = ''
-    iifname "br-*" ip saddr ${oggy.dockerSubnet} ip daddr ${oggy.lanAddress} tcp dport 8085 accept
-  '';
-  networking.firewall.allowedUDPPorts = [ 3478 ];
+  systemd.services.headscale = {
+    requires = [ "wireguard-ingress.service" ];
+    after = [ "wireguard-ingress.service" ];
+  };
+  # The gateway may reach Headscale, not arbitrary services on oggy or the LAN.
+  networking.firewall.interfaces.ingress.allowedTCPPorts = [ 8085 ];
+  # Global firewall allows also apply to VPN interfaces; restrict this peer first.
+  networking.nftables.tables.ingress-guard = {
+    family = "inet";
+    content = ''
+      chain input {
+        type filter hook input priority filter - 10; policy accept;
+        iifname "ingress" ct state established,related accept
+        iifname "ingress" tcp dport 8085 accept
+        iifname "ingress" drop
+      }
+      chain forward {
+        type filter hook forward priority filter - 10; policy accept;
+        iifname "ingress" drop
+      }
+    '';
+  };
 
   services.prometheus.scrapeConfigs = [
     {

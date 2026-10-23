@@ -71,20 +71,3 @@ http://:3000 {
 		header_up Host {host}
 	}
 }
-
-http://headscale.killeik.net {
-	# Tailscale captive portal detection must not redirect to HTTPS.
-	handle /generate_204 {
-		respond 204
-	}
-	handle {
-		redir https://{host}{uri}
-	}
-}
-headscale.killeik.net {
-	reverse_proxy 192.168.1.2:8085 {
-		header_up True-Client-IP {remote_host}
-		header_up X-Real-IP {remote_host}
-	}
-	import tls_cloudflare
-}

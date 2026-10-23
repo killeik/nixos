@@ -73,18 +73,12 @@ Nix GC запускается еженедельно и удаляет поко�
 Caddyfile, Grafana dashboards и начальный Soularr config лежат рядом с сервисами.
 Runtime state по-прежнему находится на сервере в `/home/killeik/selfhost`.
 
-`hosts/selfhost-remote/default.nix` - заготовка будущей QEMU VM, а не копия
-сервисов oggy. Перед использованием проверить `/dev/sda`, `ens3`, доступ
-и набор сервисов. Имя flake target `selfhost-remote` сохранено; disko не запускать
-по шаблонному устройству без проверки конкретной машины.
+`hosts/selfhost-remote/` - конфигурация заменяемого VPS-шлюза.
+Перед применением к другому серверу проверить дисковую разметку и сеть. Данные
+приложений остаются на oggy.
 
 История решений: [docs/archive/2026-10-21-maintenance.md](docs/archive/2026-10-21-maintenance.md).
 Архив фиксирует контекст на дату обсуждения; последующие решения могут отличаться.
-
-## Headscale
-
-Self-hosted control server Tailscale, собственный DERP и подключение клиентов:
-[docs/headscale.md](docs/headscale.md). DNS и внешний доступ проверяются до деплоя.
 
 ## Конфиги и секреты
 
