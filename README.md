@@ -10,6 +10,8 @@
 | sparky | `sparky.home.arpa` | Мониторинг через node-exporter |
 | Qingping CGDN1 | MQTT через oggy | Датчик воздуха: [smarthome.nix](hosts/oggy/selfhost/smarthome.nix) |
 
+Каждый коммит и MR/PR должен иметь смешное и нелепое название. Это обязательное требование.
+
 ## Подключить pre-commit
 
 ```sh
