@@ -88,19 +88,16 @@ uci commit firewall
 /etc/init.d/firewall reload
 ```
 
-## Conntrack tuning for Soularr and Slskd
+## Conntrack tuning
 
 Soularr can request directory contents from many Soulseek peers in a short
 period. Slskd turns those requests into direct TCP connection attempts. Peers
 that do not answer leave `SYN_SENT` entries in the OpenWrt conntrack table, so
 the router can exhaust its table even though Slskd has already timed out.
 
-The protection is split between both hosts:
-
-- oggy limits new TCP connections from the Slskd container in the
-  nftables table `ip slskd-guard`;
-- OpenWrt keeps a 32K table, expires unanswered SYN attempts after 30 seconds,
-  and keeps `TIME_WAIT` entries for 60 seconds.
+OpenWrt keeps a 32K table, expires unanswered SYN attempts after 30 seconds,
+and keeps `TIME_WAIT` entries for 60 seconds. These general router settings
+remain after the music stack was removed from oggy.
 
 ## OpenWrt
 
@@ -123,26 +120,10 @@ cat /proc/sys/net/netfilter/nf_conntrack_tcp_timeout_time_wait
 
 ## oggy
 
-The declarative guard in `hosts/oggy/selfhost/default.nix` applies only to the static Slskd
-container address `172.19.255.254`:
-
-- at most 8 new TCP connections per second, with an initial burst of 25;
-- reject new attempts above 256 concurrent tracked TCP connections;
-- leave established connections and transfer traffic untouched;
-- manage the guard declaratively through the NixOS nftables service.
-
-Verify:
-
-```sh
-systemctl is-active nftables.service docker-slskd.service
-sudo nft list table ip slskd-guard
-```
+The music stack and its dedicated connection guard have been removed from oggy.
+The general OpenWrt conntrack settings above remain in place.
 
 ## Rollback
-
-On oggy, revert the guard values in `hosts/oggy/selfhost/default.nix` to 25 connections per
-second, burst 100, and connlimit 512, then deploy the previous NixOS
-configuration.
 
 On OpenWrt, keep the 32K capacity but restore the previous TCP timeouts by
 leaving only the `nf_conntrack_max` line in the sysctl file and applying:

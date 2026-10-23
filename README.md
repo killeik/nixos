@@ -101,8 +101,6 @@ Runtime state по-прежнему находится на сервере в `/
 
 Форматировать Nix-файлы командой `nix fmt`, проверять формат - `nix fmt -- --ci`.
 
-`hosts/oggy/selfhost/soularr/config.ini` - начальный шаблон, рабочие настройки живут на сервере.
-
 ## Мониторинг хостов
 
 Сбор метрик oggy, sparky и OpenWrt, стандартные dashboards и Telegram alerts:
