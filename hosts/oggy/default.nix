@@ -16,7 +16,6 @@
     dnsAddress = "192.168.1.1";
     externalInterface = "enp0s20f0u3u4";
     dockerSubnet = "172.19.0.0/16";
-    slskdAddress = "172.19.255.254";
     qingpingDeviceId = "ccb5d1327498";
   };
 

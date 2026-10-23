@@ -8,7 +8,6 @@
 
 let
   selfhostDir = "/home/killeik/selfhost";
-  slskdContainerIp = oggy.slskdAddress;
 
   selfhostContainerServices = lib.mapAttrsToList (_: container: "${container.serviceName}.service") (
     lib.filterAttrs (
@@ -33,7 +32,6 @@ in
   system.activationScripts.selfhost-files = ''
     install -d -m 0755 -o killeik -g users ${selfhostDir}
     install -d -m 0755 -o killeik -g users ${selfhostDir}/caddy
-    install -d -m 0755 -o killeik -g users ${selfhostDir}/downloads
     # Excalidash backend runs as nodejs UID 1001 (primary GID 65533).
     # Owner access is required; retain the existing on-disk GID 1001.
     install -d -m 0755 -o 1001 -g 1001 ${selfhostDir}/excalidash
@@ -46,19 +44,8 @@ in
           > ${selfhostDir}/excalidash/backend.env
       fi
     ''}
-    install -d -m 0755 -o killeik -g users ${selfhostDir}/lidarr/config
-    install -d -m 0755 -o killeik -g users ${selfhostDir}/music
     # docker.io/postgres:18 uses postgres 999:999 for its bind-mounted data.
     install -d -m 0700 -o 999 -g 999 ${selfhostDir}/miniflux-postgres
-    install -d -m 0755 -o killeik -g users ${selfhostDir}/navidrome/data
-    install -d -m 0755 -o killeik -g users ${selfhostDir}/prowlarr/config
-    install -d -m 0755 -o killeik -g users ${selfhostDir}/qbittorrent/config
-    install -d -m 0755 -o killeik -g users ${selfhostDir}/slskd
-    install -d -m 0755 -o killeik -g users ${selfhostDir}/soularr
-    # Bootstrap template only; subsequent settings are managed in the running instance.
-    if [ ! -e ${selfhostDir}/soularr/config.ini ]; then
-      install -m 0644 -o killeik -g users ${./soularr/config.ini} ${selfhostDir}/soularr/config.ini
-    fi
     # ghcr.io/usetrmnl/larapaper uses www-data 82:82 for SQLite and images.
     install -d -m 0755 -o 82 -g 82 ${selfhostDir}/larapaper/database
     install -d -m 0755 -o 82 -g 82 ${selfhostDir}/larapaper/generated-images
@@ -93,24 +80,6 @@ in
         echo "selfhost network subnet is $subnet; expected ${oggy.dockerSubnet}. Refusing to recreate it." >&2
         exit 1
       fi
-    '';
-  };
-
-  networking.nftables.tables.slskd-guard = {
-    family = "ip";
-    content = ''
-      set connections {
-        type ipv4_addr
-        flags dynamic
-      }
-      chain forward {
-        type filter hook forward priority filter - 10; policy accept;
-        ip saddr ${slskdContainerIp} ct state new tcp flags & (fin | syn | rst | ack) == syn jump new-connection
-      }
-      chain new-connection {
-        add @connections { ip saddr ct count over 256 } reject with tcp reset
-        limit rate over 8/second burst 25 packets reject with tcp reset
-      }
     '';
   };
 
@@ -164,16 +133,6 @@ in
         dependsOn = [ "excalidash-backend" ];
         environment = {
           BACKEND_URL = "excalidash-backend:8000";
-        };
-      };
-
-      flaresolverr = commonContainerOptions // {
-        image = "ghcr.io/flaresolverr/flaresolverr:latest";
-        environment = {
-          LOG_LEVEL = "info";
-          LOG_HTML = "false";
-          CAPTCHA_SOLVER = "none";
-          TZ = "Europe/Moscow";
         };
       };
 
@@ -281,111 +240,6 @@ in
         ];
       };
 
-      lidarr = commonContainerOptions // {
-        image = "lscr.io/linuxserver/lidarr:latest";
-        environment = {
-          PUID = "1000";
-          PGID = "100";
-          TZ = "Europe/Moscow";
-        };
-        volumes = [
-          "${selfhostDir}/lidarr/config:/config"
-          "${selfhostDir}/music:/music"
-          "${selfhostDir}/downloads:/downloads"
-        ];
-      };
-
-      navidrome = commonContainerOptions // {
-        image = "docker.io/deluan/navidrome:latest";
-        environment = {
-          ND_LOGLEVEL = "info";
-          ND_SCANSCHEDULE = "1h";
-          ND_SESSIONTIMEOUT = "24h";
-        };
-        volumes = [
-          "${selfhostDir}/navidrome/data:/data"
-          "${selfhostDir}/music:/music:ro"
-        ];
-      };
-
-      qbittorrent = commonContainerOptions // {
-        image = "lscr.io/linuxserver/qbittorrent:latest";
-        environment = {
-          PUID = "1000";
-          PGID = "100";
-          TZ = "Europe/Moscow";
-          WEBUI_PORT = "8080";
-        };
-        ports = [
-          "6881:6881/tcp"
-          "6881:6881/udp"
-        ];
-        volumes = [
-          "${selfhostDir}/qbittorrent/config:/config"
-          "${selfhostDir}/downloads:/downloads"
-        ];
-      };
-
-      prowlarr = commonContainerOptions // {
-        image = "lscr.io/linuxserver/prowlarr:latest";
-        dependsOn = [ "flaresolverr" ];
-        environment = {
-          PUID = "1000";
-          PGID = "100";
-          TZ = "Europe/Moscow";
-        };
-        volumes = [
-          "${selfhostDir}/prowlarr/config:/config"
-        ];
-      };
-
-      slskd = commonContainerOptions // {
-        image = "docker.io/slskd/slskd:latest";
-        user = "1000:100";
-        environment = {
-          SLSKD_DOWNLOAD_SLOTS = "20";
-          SLSKD_DOWNLOADS_DIR = "/downloads";
-          TZ = "Europe/Moscow";
-          SLSKD_REMOTE_CONFIGURATION = "true";
-          SLSKD_SLSK_DNET_CHILDREN = "5";
-          SLSKD_SLSK_DNET_NO_CHILDREN = "true";
-          SLSKD_THROTTLING_SEARCH_INCOMING_CIRCUIT_BREAKER = "100";
-          SLSKD_THROTTLING_SEARCH_INCOMING_CONCURRENCY = "2";
-          SLSKD_THROTTLING_SEARCH_INCOMING_RESPONSE_FILE_LIMIT = "100";
-          SLSKD_UPLOAD_SLOTS = "5";
-        };
-        ports = [
-          "50300:50300/tcp"
-        ];
-        extraOptions = [
-          "--ip=${slskdContainerIp}"
-          "--ulimit=nofile=2048:2048"
-        ];
-        volumes = [
-          "${selfhostDir}/slskd:/app"
-          "${selfhostDir}/downloads:/downloads"
-          "${selfhostDir}/music:/music:ro"
-        ];
-      };
-
-      soularr = commonContainerOptions // {
-        image = "docker.io/mrusse08/soularr:latest";
-        user = "1000:100";
-        dependsOn = [
-          "lidarr"
-          "slskd"
-        ];
-        environment = {
-          TZ = "Europe/Moscow";
-          SCRIPT_INTERVAL = "300";
-          WEBUI_ENABLED = "true";
-          WEBUI_PORT = "8265";
-        };
-        volumes = [
-          "${selfhostDir}/downloads:/downloads"
-          "${selfhostDir}/soularr:/data"
-        ];
-      };
     };
   };
 }
