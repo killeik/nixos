@@ -1,3 +1,14 @@
+{
+	metrics {
+		per_host
+	}
+}
+
+# Published on host loopback only; this handler does not expose the admin API.
+http://:9180 {
+	metrics /metrics
+}
+
 (tls_cloudflare) {
 	tls {
 		dns cloudflare {env.CLOUDFLARE_API_TOKEN}
