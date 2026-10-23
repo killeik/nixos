@@ -70,7 +70,7 @@ Nix GC запускается еженедельно и удаляет поко�
 
 В `hosts/oggy/selfhost/` находятся сервисы oggy: Docker stack в `default.nix`,
 мониторинг, `smarthome.nix`, контейнер Codex и резервные копии.
-Caddyfile, Grafana dashboards и начальный Soularr config лежат рядом с сервисами.
+Caddyfile и Grafana dashboards лежат рядом с сервисами.
 Runtime state по-прежнему находится на сервере в `/home/killeik/selfhost`.
 
 `hosts/selfhost-remote/default.nix` - заготовка будущей QEMU VM, а не копия
@@ -101,8 +101,6 @@ Runtime state по-прежнему находится на сервере в `/
 переменных: `hosts/oggy/selfhost/.env.example`. Рабочие значения брать из резервной копии.
 
 Форматировать Nix-файлы командой `nix fmt`, проверять формат - `nix fmt -- --ci`.
-
-`hosts/oggy/selfhost/soularr/config.ini` - начальный шаблон, рабочие настройки живут на сервере.
 
 ## Qingping Air Monitor Lite
 
