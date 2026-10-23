@@ -7,7 +7,11 @@
 }:
 
 {
-  imports = [ ./grafana/host-alerts.nix ];
+  imports = [
+    ./grafana/host-alerts.nix
+    ./service-monitoring.nix
+    ./caddy-monitoring.nix
+  ];
 
   virtualisation.oci-containers.containers.caddy.ports = [ "${oggy.lanAddress}:3000:3000" ];
   networking.firewall.allowedTCPPorts = [ 3000 ];
@@ -66,6 +70,7 @@
       enable = true;
       listenAddress = "127.0.0.1";
       enabledCollectors = [ "systemd" ];
+      extraFlags = [ "--collector.textfile.directory=/var/lib/prometheus-node-exporter-text-files" ];
     };
 
     scrapeConfigs = [

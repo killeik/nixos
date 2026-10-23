@@ -1,0 +1,26 @@
+[Unit]
+Description=Check Headscale from nuxt-de
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=oggy-watch
+Group=oggy-watch
+ExecStart=/usr/bin/python3 /usr/local/lib/oggy-watch/check-oggy.py
+EnvironmentFile=/var/lib/oggy-watch/telegram.env
+StateDirectory=oggy-watch
+StateDirectoryMode=0700
+UMask=0077
+TimeoutStartSec=45s
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
