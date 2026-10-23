@@ -81,6 +81,11 @@ Runtime state по-прежнему находится на сервере в `/
 История решений: [docs/archive/2026-10-21-maintenance.md](docs/archive/2026-10-21-maintenance.md).
 Архив фиксирует контекст на дату обсуждения; последующие решения могут отличаться.
 
+## Headscale
+
+Self-hosted control server Tailscale, собственный DERP и подключение клиентов:
+[docs/headscale.md](docs/headscale.md). DNS и внешний доступ проверяются до деплоя.
+
 ## Конфиги и секреты
 
 Подготовлен выключенный по умолчанию sops-nix. Bootstrap, миграция и
