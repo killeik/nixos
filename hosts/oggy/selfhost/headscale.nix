@@ -14,6 +14,12 @@
     ];
   };
 
+  services.tailscale = {
+    enable = true;
+    # The control server must retain its ordinary DNS/bootstrap connectivity.
+    extraSetFlags = [ "--accept-dns=false" ];
+  };
+
   services.headscale = {
     enable = true;
     address = "10.76.0.2";
@@ -29,6 +35,24 @@
         magic_dns = true;
         # Preserve clients' existing LAN/work DNS outside MagicDNS.
         override_local_dns = false;
+        # These private answers preserve the existing Caddy hostnames and TLS.
+        extra_records =
+          map
+            (name: {
+              inherit name;
+              type = "A";
+              value = "100.64.0.10";
+            })
+            [
+              "silverbullet.killeik.net"
+              "t3.killeik.net"
+              "miniflux.killeik.net"
+              "syncthing.killeik.net"
+              "forgejo.killeik.net"
+              "excalidash.killeik.net"
+              "larapaper.killeik.net"
+              "grafana.killeik.net"
+            ];
       };
       derp = {
         urls = [ ];
