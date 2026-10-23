@@ -16,8 +16,22 @@
 
   services.tailscale = {
     enable = true;
+    useRoutingFeatures = "server";
     # The control server must retain its ordinary DNS/bootstrap connectivity.
-    extraSetFlags = [ "--accept-dns=false" ];
+    extraSetFlags = [
+      "--accept-dns=false"
+      "--advertise-exit-node"
+      # Preserve peer addresses so Caddy can enforce tailnet-only admin access.
+      "--snat-subnet-routes=false"
+    ];
+  };
+
+  # Keep NAT on the Internet uplink, preserving peer IPs toward Docker/Caddy.
+  networking.nat.internalInterfaces = [ "tailscale0" ];
+  systemd.services.tailscaled-set = {
+    wantedBy = [ "multi-user.target" ];
+    # An active oneshot is restarted by nixos-rebuild when its flags change.
+    serviceConfig.RemainAfterExit = true;
   };
 
   services.headscale = {
@@ -52,6 +66,7 @@
               "excalidash.killeik.net"
               "larapaper.killeik.net"
               "grafana.killeik.net"
+              "headplane.killeik.net"
             ];
       };
       derp = {

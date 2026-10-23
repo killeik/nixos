@@ -47,3 +47,18 @@ http://:3000 {
 		header_up Host {host}
 	}
 }
+
+headplane.killeik.net {
+	@tailnet remote_ip 100.64.0.0/10 fd7a:115c:a1e0::/48
+	handle @tailnet {
+		redir / /admin 302
+		reverse_proxy headplane:3000 {
+			# Headplane stores the API key in this cookie; keep it inaccessible to scripts.
+			header_down Set-Cookie "^(_hp_auth=.*)$" "$1; HttpOnly"
+		}
+	}
+	handle {
+		respond "Tailscale access required" 403
+	}
+	import tls_cloudflare
+}
