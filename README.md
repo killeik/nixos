@@ -10,7 +10,7 @@
 | OpenWrt | `openwrt.home.arpa` | [OpenWrt](openwrt) |
 | sparky | `sparky.home.arpa` | [node-exporter](hosts/sparky/prometheus-node-exporter) |
 
-Внешние хосты: [selfhost-remote](hosts/selfhost-remote) и [nuxt-de](hosts/nuxt-de).
+Внешние хосты: [selfhost-remote](hosts/selfhost-remote) (`ssh root@headscale.killeik.net`) и [nuxt-de](hosts/nuxt-de).
 
 ## Подключить pre-commit
 
