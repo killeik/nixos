@@ -38,7 +38,7 @@
     "console=ttyS0,115200n8"
   ];
 
-  networking.hostName = "selfhost-remote";
+  networking.hostName = "morok";
   networking.useDHCP = false;
   networking.interfaces.ens3.useDHCP = true;
   services.openssh.settings.PermitRootLogin = "prohibit-password";

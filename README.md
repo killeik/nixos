@@ -9,8 +9,10 @@
 | oggy | `oggy.home.arpa` | [NixOS](hosts/oggy) |
 | OpenWrt | `openwrt.home.arpa` | [OpenWrt](openwrt) |
 | sparky | `sparky.home.arpa` | [node-exporter](hosts/sparky/prometheus-node-exporter) |
+| morok | `morok.killeik.net` | [NixOS](hosts/morok) |
+| faust | `faust.killeik.net` | [Внешний мониторинг](hosts/faust) |
 
-Внешние хосты: [selfhost-remote](hosts/selfhost-remote) (`ssh root@headscale.killeik.net`) и [nuxt-de](hosts/nuxt-de).
+SSH: `ssh root@morok.killeik.net`, `ssh root@faust.killeik.net`.
 
 ## Подключить pre-commit
 
