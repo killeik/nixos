@@ -1,5 +1,6 @@
 {
   pkgs,
+  oggy,
   ...
 }:
 
@@ -14,6 +15,9 @@
   _module.args.oggy = {
     lanAddress = "192.168.1.2";
     dnsAddress = "192.168.1.1";
+    routerAddress = "192.168.1.1";
+    tailnetAddress = "100.64.0.10";
+    headscaleAddress = "10.76.0.2";
     externalInterface = "enp0s20f0u3u4";
     dockerSubnet = "172.19.0.0/16";
     qingpingDeviceId = "ccb5d1327498";
@@ -29,6 +33,11 @@
   networking.hostName = "oggy";
 
   networking.networkmanager.enable = true;
+
+  networking.nat = {
+    enable = true;
+    externalInterface = oggy.externalInterface;
+  };
 
   hardware.bluetooth.enable = true;
 
@@ -70,6 +79,7 @@
 
   users.users.killeik = {
     isNormalUser = true;
+    uid = 1000;
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBT5yrcVE1NHFJS9qnwx+01s47mEQ+RE3IQ8dlLefkI3 killeik@onibrain-2024-07-01"
     ];

@@ -1,102 +1,10 @@
 { ... }:
 
 let
-  alertRule =
-    {
-      uid,
-      title,
-      expr,
-      condition,
-      duration,
-      description,
-      summary,
-      dashboard ? "node-exporter-full",
-      panelId,
-      severity ? "warning",
-    }:
-    {
-      inherit uid title;
-      condition = "B";
-      for = duration;
-      noDataState = "OK";
-      execErrState = "Error";
-      labels = {
-        inherit severity;
-        scope = "infrastructure";
-      };
-      annotations = {
-        inherit description summary;
-        __dashboardUid__ = dashboard;
-        __panelId__ = toString panelId;
-      };
-      notification_settings = {
-        # Keep the existing contact point UID and credentials during this expansion.
-        receiver = "qingping-telegram";
-        group_wait = "30s";
-        group_interval = "5m";
-        repeat_interval = "4h";
-      };
-      data = [
-        {
-          refId = "A";
-          datasourceUid = "PBFA97CFB590B2093";
-          relativeTimeRange = {
-            from = 300;
-            to = 0;
-          };
-          model = {
-            refId = "A";
-            inherit expr;
-            instant = true;
-            range = false;
-          };
-        }
-        {
-          refId = "B";
-          datasourceUid = "__expr__";
-          relativeTimeRange = {
-            from = 0;
-            to = 0;
-          };
-          model = {
-            refId = "B";
-            type = "math";
-            expression = condition;
-          };
-        }
-      ];
-    };
+  alertRule = import ./alert-rule.nix;
 in
 {
-  systemd.services.grafana.serviceConfig.EnvironmentFile = "/var/lib/qingping/telegram.env";
-
   services.grafana.provision.alerting = {
-    contactPoints.settings.contactPoints = [
-      {
-        orgId = 1;
-        name = "qingping-telegram";
-        receivers = [
-          {
-            uid = "qingping-telegram";
-            type = "telegram";
-            disableResolveMessage = false;
-            settings = {
-              bottoken = "$QINGPING_TELEGRAM_TOKEN";
-              chatid = "$QINGPING_TELEGRAM_CHAT_ID";
-              parse_mode = "None";
-              disable_web_page_preview = true;
-              message = ''
-                {{ range .Alerts }}
-                {{ if eq .Status "firing" }}{{ .Annotations.description }}{{ else }}Все, молчу.{{ end }}
-                {{ .Annotations.summary }}
-                {{ .DashboardURL }}
-                {{ end }}
-              '';
-            };
-          }
-        ];
-      }
-    ];
     rules.settings.groups = [
       {
         orgId = 1;
@@ -329,30 +237,6 @@ in
             severity = "critical";
             expr = ''time() - (max(oggy_backup_last_success_timestamp_seconds{job="node",host="oggy"}) or vector(0))'';
             panelId = 4;
-          }
-          {
-            uid = "qingping-data-stale";
-            title = "Нет свежих показаний Qingping";
-            condition = "$A > 600";
-            duration = "5m";
-            description = "Датчик Qingping давно молчит.";
-            summary = "Нет свежих показаний CO2 больше 10 минут.";
-            dashboard = "service-health";
-            severity = "warning";
-            expr = ''time() - (max(max_over_time(timestamp(qingping_co2_ppm{job="qingping"})[1h:1m])) or vector(0))'';
-            panelId = 5;
-          }
-          {
-            uid = "qingping-mqtt-disconnected";
-            title = "Экспортер потерял MQTT";
-            condition = "$A < 1";
-            duration = "3m";
-            description = "Экспортер Qingping потерял связь с MQTT.";
-            summary = "Соединение не восстановилось за 3 минуты.";
-            dashboard = "service-health";
-            severity = "warning";
-            expr = ''mqtt2prometheus_connected{job="qingping"}'';
-            panelId = 5;
           }
           {
             uid = "monitoring-textfile-error";

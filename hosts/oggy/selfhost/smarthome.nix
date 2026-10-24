@@ -74,64 +74,7 @@ let
         ];
   };
 
-  alertRule =
-    {
-      uid,
-      title,
-      metric,
-      condition,
-      duration,
-      description,
-      summary,
-      panelId,
-    }:
-    {
-      inherit uid title;
-      condition = "B";
-      for = duration;
-      noDataState = "OK";
-      execErrState = "Error";
-      annotations = {
-        inherit description summary;
-        __dashboardUid__ = "qingping-air";
-        __panelId__ = toString panelId;
-      };
-      notification_settings = {
-        receiver = "qingping-telegram";
-        group_wait = "30s";
-        group_interval = "5m";
-        repeat_interval = "4h";
-      };
-      data = [
-        {
-          refId = "A";
-          datasourceUid = "PBFA97CFB590B2093";
-          relativeTimeRange = {
-            from = 180;
-            to = 0;
-          };
-          model = {
-            refId = "A";
-            expr = "${metric}{job=\"qingping\"}";
-            instant = true;
-            range = false;
-          };
-        }
-        {
-          refId = "B";
-          datasourceUid = "__expr__";
-          relativeTimeRange = {
-            from = 0;
-            to = 0;
-          };
-          model = {
-            refId = "B";
-            type = "math";
-            expression = condition;
-          };
-        }
-      ];
-    };
+  alertRule = import ./grafana/alert-rule.nix;
 in
 {
   services.mosquitto = {
@@ -221,38 +164,77 @@ in
         name = "Qingping";
         folder = "Home";
         interval = "1m";
-        rules = map alertRule [
-          {
-            uid = "qingping-co2-high";
-            title = "Высокий CO2";
-            metric = "qingping_co2_ppm";
-            condition = "$A > 1500";
-            duration = "10m";
-            description = "Я тут тоже живу. Открой окно.";
-            summary = ''CO2: {{ printf "%.0f" $values.A.Value }} ppm.'';
-            panelId = 1;
-          }
-          {
-            uid = "qingping-humidity-low";
-            title = "Низкая влажность";
-            metric = "qingping_humidity_percent";
-            condition = "$A < 35";
-            duration = "30m";
-            description = "Низкая влажность.";
-            summary = ''Влажность: {{ printf "%.0f" $values.A.Value }}%.'';
-            panelId = 5;
-          }
-          {
-            uid = "qingping-humidity-high";
-            title = "Высокая влажность";
-            metric = "qingping_humidity_percent";
-            condition = "$A > 55";
-            duration = "30m";
-            description = "Хозяин, сыровато. У нас тут кто-то прорастает.";
-            summary = ''Влажность: {{ printf "%.0f" $values.A.Value }}%.'';
-            panelId = 5;
-          }
-        ];
+        rules =
+          map
+            (
+              rule:
+              alertRule (
+                {
+                  dashboard = "qingping-air";
+                  timeRange = 180;
+                  labels = null;
+                }
+                // rule
+              )
+            )
+            [
+              {
+                uid = "qingping-co2-high";
+                title = "Высокий CO2";
+                expr = ''qingping_co2_ppm{job="qingping"}'';
+                condition = "$A > 1500";
+                duration = "10m";
+                description = "Я тут тоже живу. Открой окно.";
+                summary = ''CO2: {{ printf "%.0f" $values.A.Value }} ppm.'';
+                panelId = 1;
+              }
+              {
+                uid = "qingping-humidity-low";
+                title = "Низкая влажность";
+                expr = ''qingping_humidity_percent{job="qingping"}'';
+                condition = "$A < 35";
+                duration = "30m";
+                description = "Низкая влажность.";
+                summary = ''Влажность: {{ printf "%.0f" $values.A.Value }}%.'';
+                panelId = 5;
+              }
+              {
+                uid = "qingping-humidity-high";
+                title = "Высокая влажность";
+                expr = ''qingping_humidity_percent{job="qingping"}'';
+                condition = "$A > 55";
+                duration = "30m";
+                description = "Хозяин, сыровато. У нас тут кто-то прорастает.";
+                summary = ''Влажность: {{ printf "%.0f" $values.A.Value }}%.'';
+                panelId = 5;
+              }
+            ]
+          ++ map alertRule [
+            {
+              uid = "qingping-data-stale";
+              title = "Нет свежих показаний Qingping";
+              condition = "$A > 600";
+              duration = "5m";
+              description = "Датчик Qingping давно молчит.";
+              summary = "Нет свежих показаний CO2 больше 10 минут.";
+              dashboard = "service-health";
+              severity = "warning";
+              expr = ''time() - (max(max_over_time(timestamp(qingping_co2_ppm{job="qingping"})[1h:1m])) or vector(0))'';
+              panelId = 5;
+            }
+            {
+              uid = "qingping-mqtt-disconnected";
+              title = "Экспортер потерял MQTT";
+              condition = "$A < 1";
+              duration = "3m";
+              description = "Экспортер Qingping потерял связь с MQTT.";
+              summary = "Соединение не восстановилось за 3 минуты.";
+              dashboard = "service-health";
+              severity = "warning";
+              expr = ''mqtt2prometheus_connected{job="qingping"}'';
+              panelId = 5;
+            }
+          ];
       }
     ];
   };
