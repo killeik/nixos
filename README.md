@@ -1,16 +1,16 @@
 # NixOS / oggy
 
+Названия коммитов и MR должны смешно и немного странно рассказывать об изменениях моими словами, без абстракций и повторения одних и тех же образов.
+
 ## Устройства
 
-| Устройство | Адрес | Назначение / конфигурация |
+| Устройство | Адрес | Конфигурация |
 | --- | --- | --- |
-| oggy | `oggy.home.arpa` / `192.168.1.2` | Домашний сервер: [hosts/oggy](hosts/oggy) |
-| selfhost-remote | - | Заготовка QEMU VM: [hosts/selfhost-remote](hosts/selfhost-remote) |
-| OpenWrt | `192.168.1.1` | Роутер: [openwrt](openwrt) |
-| sparky | `sparky.home.arpa` | Мониторинг через node-exporter |
-| Qingping CGDN1 | MQTT через oggy | Датчик воздуха: [smarthome.nix](hosts/oggy/selfhost/smarthome.nix) |
+| oggy | `oggy.home.arpa` | [NixOS](hosts/oggy) |
+| OpenWrt | `openwrt.home.arpa` | [OpenWrt](openwrt) |
+| sparky | `sparky.home.arpa` | [node-exporter](hosts/sparky/prometheus-node-exporter) |
 
-Каждый коммит и MR/PR должен иметь смешное и нелепое название. Это обязательное требование.
+Внешние хосты: [selfhost-remote](hosts/selfhost-remote) и [nuxt-de](hosts/nuxt-de).
 
 ## Подключить pre-commit
 
