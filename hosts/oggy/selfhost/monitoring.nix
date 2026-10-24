@@ -1,20 +1,15 @@
-{
-  config,
-  lib,
-  pkgs,
-  oggy,
-  ...
-}:
+{ oggy, ... }:
 
 {
   imports = [
     ./grafana/host-alerts.nix
     ./service-monitoring.nix
-    ./caddy-monitoring.nix
   ];
 
-  virtualisation.oci-containers.containers.caddy.ports = [ "${oggy.lanAddress}:3000:3000" ];
-  networking.firewall.allowedTCPPorts = [ 3000 ];
+  virtualisation.oci-containers.containers.caddy.ports = [
+    "${oggy.lanAddress}:3000:3000"
+    "127.0.0.1:9180:9180"
+  ];
 
   services.grafana = {
     enable = true;
@@ -43,13 +38,6 @@
       ];
     };
   };
-
-  systemd.services.grafana.preStart = lib.mkIf (!config.oggy.sops.enable) ''
-    if [ ! -s /var/lib/grafana/secret_key ]; then
-      umask 077
-      ${pkgs.openssl}/bin/openssl rand -hex 32 > /var/lib/grafana/secret_key
-    fi
-  '';
 
   # Caddy bind-mounts this directory, so its inode must survive service stops.
   systemd.services.grafana.serviceConfig.RuntimeDirectoryPreserve = "yes";
@@ -103,6 +91,15 @@
     };
 
     scrapeConfigs = [
+      {
+        job_name = "caddy";
+        scrape_interval = "30s";
+        static_configs = [
+          {
+            targets = [ "127.0.0.1:9180" ];
+          }
+        ];
+      }
       {
         job_name = "node";
         scrape_interval = "30s";

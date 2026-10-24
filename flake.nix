@@ -25,6 +25,7 @@
       nixosConfigurations.selfhost-remote = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         modules = [
+          sops-nix.nixosModules.sops
           disko.nixosModules.disko
           ./hosts/selfhost-remote
         ];

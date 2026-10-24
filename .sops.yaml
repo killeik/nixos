@@ -1,0 +1,11 @@
+keys:
+  - &oggy age1j2u8zygykmv45an6e0g3xwczck6yj2j8eqftek3sa2g22alkqqnsz7hgs9
+  - &selfhost_remote age1453aahtelhwe45y4gwxq9tp20fv7qp0jr6hhtcxlep8acmazvd6se8840m
+  - &recovery age15n7yy246t0jplgf3q5cw8fq3gnt2hk9gw3q82xpry8065p3assts30g4hr
+creation_rules:
+  - path_regex: hosts/oggy/secrets/.*\.sops$
+    key_groups:
+      - age: [*oggy, *recovery]
+  - path_regex: hosts/selfhost-remote/secrets/.*\.sops$
+    key_groups:
+      - age: [*selfhost_remote, *oggy, *recovery]

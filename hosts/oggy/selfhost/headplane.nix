@@ -12,7 +12,7 @@ let
       port = 3000;
       base_url = "https://headplane.killeik.net";
       cookie_secure = true;
-      cookie_secret_path = "/var/lib/headplane/cookie-secret";
+      cookie_secret_path = "/etc/headplane/cookie-secret";
       data_path = "/var/lib/headplane";
     };
     headscale = {
@@ -28,14 +28,6 @@ in
 {
   # Distroless nonroot UID, isolated from Headscale's Unix identity.
   systemd.tmpfiles.rules = [ "d /var/lib/headplane 0700 65532 65532 -" ];
-  systemd.services.docker-headplane.preStart = ''
-    if [ ! -s /var/lib/headplane/cookie-secret ]; then
-      umask 077
-      ${pkgs.openssl}/bin/openssl rand -hex 16 | ${pkgs.coreutils}/bin/tr -d '\n' > /var/lib/headplane/cookie-secret
-      chown 65532:65532 /var/lib/headplane/cookie-secret
-    fi
-  '';
-
   virtualisation.oci-containers.containers.headplane = {
     image = "ghcr.io/tale/headplane:0.8.2";
     pull = "always";
@@ -45,6 +37,7 @@ in
       "${settings}:/etc/headplane/config.yaml:ro"
       "${config.services.headscale.configFile}:/etc/headscale/config.yaml:ro"
       "/var/lib/headplane:/var/lib/headplane"
+      "${config.sops.secrets.headplane.path}:/etc/headplane/cookie-secret:ro"
     ];
     extraOptions = [
       "--cap-drop=ALL"
