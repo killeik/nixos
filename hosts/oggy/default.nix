@@ -7,6 +7,7 @@
 {
   imports = [
     ./hardware.nix
+    ../../modules/nixos/base.nix
     ./selfhost
     ./secrets.nix
   ];
@@ -41,8 +42,6 @@
 
   hardware.bluetooth.enable = true;
 
-  time.timeZone = "Europe/Moscow";
-
   networking.nftables = {
     enable = true;
     # Docker owns its iptables-nft tables; reload only our declarative tables.
@@ -69,13 +68,7 @@
 
   security.sudo.wheelNeedsPassword = false;
 
-  services.openssh = {
-    enable = true;
-    settings = {
-      PasswordAuthentication = false;
-      PermitRootLogin = "no";
-    };
-  };
+  services.openssh.settings.PermitRootLogin = "no";
 
   users.users.killeik = {
     isNormalUser = true;
@@ -100,16 +93,8 @@
   ];
 
   system.stateVersion = "25.11";
-
-  nix.settings = {
-    trusted-users = [
-      "root"
-      "killeik"
-    ];
-
-    experimental-features = [
-      "flakes"
-      "nix-command"
-    ];
-  };
+  nix.settings.trusted-users = [
+    "root"
+    "killeik"
+  ];
 }
