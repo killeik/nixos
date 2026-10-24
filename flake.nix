@@ -22,12 +22,12 @@
     }:
     {
       formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.nixfmt-tree;
-      nixosConfigurations.selfhost-remote = nixpkgs.lib.nixosSystem {
+      nixosConfigurations.morok = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         modules = [
           sops-nix.nixosModules.sops
           disko.nixosModules.disko
-          ./hosts/selfhost-remote
+          ./hosts/morok
         ];
       };
       nixosConfigurations.oggy = nixpkgs.lib.nixosSystem {

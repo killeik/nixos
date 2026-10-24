@@ -1,5 +1,5 @@
 [Unit]
-Description=Check Headscale from nuxt-de
+Description=Check Headscale from faust
 Wants=network-online.target
 After=network-online.target
 

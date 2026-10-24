@@ -40,7 +40,7 @@ in
     };
     wireguard = secret "/var/lib/wireguard/ingress.key" [ "wireguard-ingress.service" ];
     remote-wireguard = (secret "/var/lib/wireguard/remote-ingress.key" [ ]) // {
-      sopsFile = ../selfhost-remote/secrets/ingress.key.sops;
+      sopsFile = ../morok/secrets/ingress.key.sops;
     };
     headplane = (secret "/var/lib/headplane/cookie-secret" [ "docker-headplane.service" ]) // {
       sopsFile = ./secrets/headplane-cookie.sops;
