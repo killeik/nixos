@@ -16,7 +16,7 @@ let
       data_path = "/var/lib/headplane";
     };
     headscale = {
-      url = "http://10.76.0.2:8085";
+      url = "http://${oggy.headscaleAddress}:8085";
       public_url = "https://headscale.killeik.net";
       config_path = "/etc/headscale/config.yaml";
       config_strict = false;
@@ -56,6 +56,6 @@ in
 
   # The panel reaches the native API through the host, authenticated by API key.
   networking.firewall.extraInputRules = ''
-    iifname "br-*" ip saddr ${oggy.dockerSubnet} ip daddr 10.76.0.2 tcp dport 8085 accept
+    iifname "br-*" ip saddr ${oggy.dockerSubnet} ip daddr ${oggy.headscaleAddress} tcp dport 8085 accept
   '';
 }

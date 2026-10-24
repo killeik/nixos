@@ -82,11 +82,7 @@
     TasksMax = 4096;
   };
 
-  networking.nat = {
-    enable = true;
-    externalInterface = oggy.externalInterface;
-    internalInterfaces = [ "ve-codex" ];
-  };
+  networking.nat.internalInterfaces = [ "ve-codex" ];
   # Run before the NixOS and Docker filter chains, after conntrack and DNAT.
   networking.nftables.tables.codex-guard = {
     family = "inet";

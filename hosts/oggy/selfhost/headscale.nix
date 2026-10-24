@@ -1,8 +1,8 @@
-{ pkgs, ... }:
+{ pkgs, oggy, ... }:
 
 {
   networking.wireguard.interfaces.ingress = {
-    ips = [ "10.76.0.2/32" ];
+    ips = [ "${oggy.headscaleAddress}/32" ];
     privateKeyFile = "/var/lib/wireguard/ingress.key";
     peers = [
       {
@@ -36,7 +36,7 @@
 
   services.headscale = {
     enable = true;
-    address = "10.76.0.2";
+    address = oggy.headscaleAddress;
     port = 8085;
     settings = {
       server_url = "https://headscale.killeik.net";
@@ -55,7 +55,7 @@
             (name: {
               inherit name;
               type = "A";
-              value = "100.64.0.10";
+              value = oggy.tailnetAddress;
             })
             [
               "silverbullet.killeik.net"

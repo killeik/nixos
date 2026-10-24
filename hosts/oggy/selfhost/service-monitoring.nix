@@ -1,4 +1,9 @@
-{ pkgs, lib, ... }:
+{
+  pkgs,
+  lib,
+  oggy,
+  ...
+}:
 
 let
   # Probe the private Caddy address with each site's real Host and TLS identity.
@@ -32,7 +37,7 @@ in
     listenAddress = "127.0.0.1";
     configFile = (pkgs.formats.yaml { }).generate "blackbox.yml" {
       modules = modules // {
-        headscale = {
+        https = {
           prober = "http";
           timeout = "10s";
           http.preferred_ip_protocol = "ip4";
@@ -46,7 +51,7 @@ in
     {
       job_name = "grafana";
       scrape_interval = "30s";
-      static_configs = [ { targets = [ "192.168.1.2:3000" ]; } ];
+      static_configs = [ { targets = [ "${oggy.lanAddress}:3000" ]; } ];
     }
     {
       job_name = "prometheus";
@@ -60,7 +65,7 @@ in
       metrics_path = "/probe";
       static_configs =
         lib.mapAttrsToList (name: path: {
-          targets = [ "https://100.64.0.10${path}" ];
+          targets = [ "https://${oggy.tailnetAddress}${path}" ];
           labels = {
             service = name;
             module = name;
@@ -71,7 +76,14 @@ in
             targets = [ "https://headscale.killeik.net/health" ];
             labels = {
               service = "headscale";
-              module = "headscale";
+              module = "https";
+            };
+          }
+          {
+            targets = [ "https://derp.killeik.net/derp/latency-check" ];
+            labels = {
+              service = "derp";
+              module = "https";
             };
           }
         ];
