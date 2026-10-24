@@ -30,6 +30,9 @@ def main():
         backup_sqlite(
             Path("/var/lib/grafana/data/grafana.db"), pending / "grafana.sqlite"
         )
+        backup_sqlite(
+            Path("/var/lib/headscale/db.sqlite"), pending / "headscale.sqlite"
+        )
         with (pending / "miniflux.dump").open("wb") as dump:
             subprocess.run(
                 [
@@ -46,7 +49,7 @@ def main():
                 stdout=subprocess.DEVNULL,
                 check=True,
             )
-        for name in ("forgejo.sqlite", "grafana.sqlite", "miniflux.dump"):
+        for name in ("forgejo.sqlite", "grafana.sqlite", "headscale.sqlite", "miniflux.dump"):
             os.replace(pending / name, destination / name)
 
 

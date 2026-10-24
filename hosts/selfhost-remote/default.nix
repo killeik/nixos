@@ -1,6 +1,9 @@
 { modulesPath, ... }:
 {
-  imports = [ (modulesPath + "/profiles/qemu-guest.nix") ];
+  imports = [
+    (modulesPath + "/profiles/qemu-guest.nix")
+    ./gateway.nix
+  ];
 
   disko.devices.disk.main = {
     type = "disk";

@@ -27,6 +27,7 @@ in
     ./smarthome.nix
     ./codex.nix
     ./backups.nix
+    ./headscale.nix
   ];
 
   system.activationScripts.selfhost-files = ''
