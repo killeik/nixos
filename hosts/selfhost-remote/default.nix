@@ -3,6 +3,7 @@
   imports = [
     (modulesPath + "/profiles/qemu-guest.nix")
     ./gateway.nix
+    ./secrets.nix
   ];
 
   disko.devices.disk.main = {

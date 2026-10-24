@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  pkgs,
   oggy,
   ...
 }:
@@ -39,13 +38,6 @@ in
     install -d -m 0755 -o 1001 -g 1001 ${selfhostDir}/excalidash
     install -d -m 0755 -o 1001 -g 1001 ${selfhostDir}/excalidash/backups
     install -d -m 0755 -o 1001 -g 1001 ${selfhostDir}/excalidash/prisma
-    ${lib.optionalString (!config.oggy.sops.enable) ''
-      if [ ! -e ${selfhostDir}/excalidash/backend.env ]; then
-        install -m 0600 -o root -g root /dev/null ${selfhostDir}/excalidash/backend.env
-        printf 'API_KEY_HASH_PEPPER=%s\n' "$(${pkgs.openssl}/bin/openssl rand -hex 32)" \
-          > ${selfhostDir}/excalidash/backend.env
-      fi
-    ''}
     # docker.io/postgres:18 uses postgres 999:999 for its bind-mounted data.
     install -d -m 0700 -o 999 -g 999 ${selfhostDir}/miniflux-postgres
     # ghcr.io/usetrmnl/larapaper uses www-data 82:82 for SQLite and images.
