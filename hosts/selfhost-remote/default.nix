@@ -2,6 +2,7 @@
 {
   imports = [
     (modulesPath + "/profiles/qemu-guest.nix")
+    ../../modules/nixos/base.nix
     ./gateway.nix
     ./secrets.nix
   ];
@@ -40,24 +41,12 @@
   networking.hostName = "selfhost-remote";
   networking.useDHCP = false;
   networking.interfaces.ens3.useDHCP = true;
-  time.timeZone = "Europe/Moscow";
-
-  services.openssh = {
-    enable = true;
-    settings = {
-      PasswordAuthentication = false;
-      KbdInteractiveAuthentication = false;
-      PermitRootLogin = "prohibit-password";
-    };
-  };
+  services.openssh.settings.PermitRootLogin = "prohibit-password";
+  services.openssh.settings.KbdInteractiveAuthentication = false;
   users.users.root.openssh.authorizedKeys.keys = [
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBT5yrcVE1NHFJS9qnwx+01s47mEQ+RE3IQ8dlLefkI3"
   ];
 
-  nix.settings.experimental-features = [
-    "nix-command"
-    "flakes"
-  ];
   nix.gc = {
     automatic = true;
     dates = "weekly";
