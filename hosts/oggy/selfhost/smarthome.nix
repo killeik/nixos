@@ -214,43 +214,7 @@ in
     }
   ];
 
-  services.grafana.provision.dashboards.settings.providers = [
-    {
-      name = "qingping";
-      folder = "Home";
-      options.path = ./grafana/dashboards;
-    }
-  ];
-
-  systemd.services.grafana.serviceConfig.EnvironmentFile = "/var/lib/qingping/telegram.env";
-
   services.grafana.provision.alerting = {
-    contactPoints.settings.contactPoints = [
-      {
-        orgId = 1;
-        name = "qingping-telegram";
-        receivers = [
-          {
-            uid = "qingping-telegram";
-            type = "telegram";
-            disableResolveMessage = false;
-            settings = {
-              bottoken = "$QINGPING_TELEGRAM_TOKEN";
-              chatid = "$QINGPING_TELEGRAM_CHAT_ID";
-              parse_mode = "None";
-              disable_web_page_preview = true;
-              message = ''
-                {{ range .Alerts }}
-                {{ if eq .Status "firing" }}{{ .Annotations.description }}{{ else }}Все, молчу.{{ end }}
-                {{ .Annotations.summary }}
-                {{ .DashboardURL }}
-                {{ end }}
-              '';
-            };
-          }
-        ];
-      }
-    ];
     rules.settings.groups = [
       {
         orgId = 1;
