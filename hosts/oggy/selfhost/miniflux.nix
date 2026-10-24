@@ -12,6 +12,9 @@ in
   '';
 
   virtualisation.oci-containers.containers = {
+    reactflux = commonContainerOptions // {
+      image = "docker.io/electh/reactflux@sha256:238383c04fd7d915c9539ccec0b8738bb98f15b2ebd886b1ea01a08156cf4850";
+    };
     miniflux = commonContainerOptions // {
       image = "docker.io/miniflux/miniflux:latest";
       dependsOn = [ "miniflux-db" ];
