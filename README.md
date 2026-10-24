@@ -12,8 +12,6 @@
 | morok | `morok.killeik.net` | [NixOS](hosts/morok) |
 | faust | `faust.killeik.net` | [Внешний мониторинг](hosts/faust) |
 
-SSH: `ssh root@morok.killeik.net`, `ssh root@faust.killeik.net`.
-
 ## Подключить pre-commit
 
 ```sh
@@ -48,5 +46,3 @@ cf dns records create --zone killeik.net \
 cf dns records edit <record-id> --zone killeik.net \
   --body '{"content":"server.killeik.net","ttl":1}'
 ```
-
-[Архив решений](docs/archive/2026-10-21-maintenance.md).
