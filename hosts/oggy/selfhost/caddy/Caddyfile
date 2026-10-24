@@ -30,6 +30,10 @@ miniflux.killeik.net {
 	reverse_proxy miniflux:8080
 	import tls_cloudflare
 }
+reactflux.killeik.net {
+	reverse_proxy reactflux:2000
+	import tls_cloudflare
+}
 syncthing.killeik.net {
 	reverse_proxy syncthing:8384
 	import tls_cloudflare
